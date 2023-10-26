@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -41,9 +42,9 @@ func loginScreen(_ fyne.Window) fyne.CanvasObject {
 		}
 
 		button.SetText("登录进去...")
-
 		go func() {
 
+			time.Sleep(time.Second)
 			err := handleLogin(usernameInput.Text, passwordInput.Text)
 			if err != nil {
 				dialog.ShowError(err, Window)

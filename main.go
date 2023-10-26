@@ -24,8 +24,8 @@ func main() {
 
 	//panels.MyApp.Settings().SetTheme(theme.DarkTheme())
 	tm.IsDark = true
-	panels.MyApp.Settings().SetTheme(&tm.MyDark{})
-	panels.Window = panels.MyApp.NewWindow("工具箱")
+	panels.MyApp.Settings().SetTheme(&tm.MyTheme{})
+	panels.Window = panels.MyApp.NewWindow("炒.西红柿.鸡蛋")
 	panels.Window.SetMainMenu(makeMenu(panels.MyApp, panels.Window))
 	panels.Window.SetMaster()
 	topWindow = panels.Window
@@ -123,13 +123,13 @@ func makeNav(setMenu func(panel panels.Panel), loadPrevious bool) fyne.CanvasObj
 		widget.NewButton("黑暗", func() {
 			tm.IsDark = true
 			panels.Line.StrokeColor = color.White
-			panels.MyApp.Settings().SetTheme(tm.MyDark{})
+			panels.MyApp.Settings().SetTheme(tm.MyTheme{})
 
 		}),
 		widget.NewButton("亮", func() {
 			tm.IsDark = false
 			panels.Line.StrokeColor = color.Gray16{0x9FFF}
-			panels.MyApp.Settings().SetTheme(tm.MyLight{})
+			panels.MyApp.Settings().SetTheme(tm.MyTheme{})
 		}),
 	)
 	return container.NewBorder(nil, themes, nil, nil, tree)
