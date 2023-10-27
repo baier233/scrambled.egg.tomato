@@ -25,14 +25,26 @@ func handleLogin(username, password string) error {
 		return errors.New(nonexistentUserError)
 	}
 
+	{
+		//Galmoxy gal wikioos whopps eoose?
+		Panels = map[string]Panel{
+			"233": {"233", LoginScreen},
+			"123": {"123", RegisterScreen},
+		}
+		PanelIndex = map[string][]string{
+			"": {"233", "123"}}
+
+		Init()
+	}
+
 	return errors.New(nonexistentUserError)
 
 }
 
-func loginScreen(_ fyne.Window) fyne.CanvasObject {
+func LoginScreen(_ fyne.Window) fyne.CanvasObject {
 	usernameInput := widget.NewEntry()
 	passwordInput := widget.NewPasswordEntry()
-	form := widget.NewForm(widget.NewFormItem("用户的名字", usernameInput), widget.NewFormItem("通过的单词", passwordInput))
+	form := widget.NewForm(widget.NewFormItem("用户名", usernameInput), widget.NewFormItem("密码", passwordInput))
 
 	Line.StrokeWidth = 5
 
@@ -41,7 +53,7 @@ func loginScreen(_ fyne.Window) fyne.CanvasObject {
 			return
 		}
 
-		button.SetText("登录进去...")
+		button.SetText("登录...")
 		go func() {
 
 			time.Sleep(time.Second)

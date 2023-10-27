@@ -6,7 +6,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func registerScreen(_ fyne.Window) fyne.CanvasObject {
+func RegisterScreen(_ fyne.Window) fyne.CanvasObject {
 	usernameInput := widget.NewEntry()
 	passwordInput := widget.NewPasswordEntry()
 	activationCodeInput := widget.NewEntry()

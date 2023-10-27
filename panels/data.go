@@ -9,6 +9,9 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+var MainMenu *fyne.MainMenu
+var Theme *fyne.Container
+
 const (
 	emptyInputDataError  = "进来的数据不能是空的"
 	nonexistentUserError = "用户是不存在的"
@@ -19,16 +22,8 @@ type Panel struct {
 	View  func(w fyne.Window) fyne.CanvasObject
 }
 
-var (
-	Panels = map[string]Panel{
-		"登录": {"登录", loginScreen},
-		"注册": {"注册", registerScreen},
-	}
-
-	PanelIndex = map[string][]string{
-		"": {"注册", "登录"},
-	}
-)
+var Panels map[string]Panel
+var PanelIndex map[string][]string
 
 var (
 	MyApp  = app.NewWithID("scrambled.egg.tomato")

@@ -1,6 +1,7 @@
 package tm
 
 import (
+	"ScrambledEggwithTomato/panels"
 	"ScrambledEggwithTomato/resources"
 	"image/color"
 
@@ -15,8 +16,10 @@ type MyTheme struct{}
 var _ fyne.Theme = (*MyTheme)(nil)
 
 func (m MyTheme) Color(n fyne.ThemeColorName, v fyne.ThemeVariant) color.Color {
+
 	//return theme.DefaultTheme().Color(n, v)
 	if IsDark {
+
 		return theme.DarkTheme().Color(n, v)
 	}
 
@@ -24,6 +27,7 @@ func (m MyTheme) Color(n fyne.ThemeColorName, v fyne.ThemeVariant) color.Color {
 }
 func (m MyTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
 	if IsDark {
+
 		return theme.DarkTheme().Icon(name)
 	}
 
@@ -31,6 +35,7 @@ func (m MyTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
 }
 
 func (m MyTheme) Font(style fyne.TextStyle) fyne.Resource {
+
 	if style.Bold {
 		return &fyne.StaticResource{
 			StaticName:    "HarmonyOS_Sans_SC_Bold.ttf",
@@ -51,8 +56,11 @@ func (m MyTheme) Font(style fyne.TextStyle) fyne.Resource {
 
 func (m MyTheme) Size(name fyne.ThemeSizeName) float32 {
 	if IsDark {
+
+		panels.Line.StrokeColor = color.White
 		return theme.DarkTheme().Size(name)
 	}
 
+	panels.Line.StrokeColor = color.Gray16{0x9FFF}
 	return theme.LightTheme().Size(name)
 }
