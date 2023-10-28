@@ -10,8 +10,8 @@ func preInit() {
 
 	panels.Panels =
 		map[string]panels.Panel{
-			"登录": {"登录", panels.LoginScreen},
-			"注册": {"注册", panels.RegisterScreen},
+			"登录": {Title: "登录", View: panels.LoginScreen},
+			"注册": {Title: "注册", View: panels.RegisterScreen},
 		}
 	panels.PanelIndex = map[string][]string{
 		"": {"注册", "登录"},

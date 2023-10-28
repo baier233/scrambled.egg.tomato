@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -28,11 +27,11 @@ func handleLogin(username, password string) error {
 	{
 		//Galmoxy gal wikioos whopps eoose?
 		Panels = map[string]Panel{
-			"233": {"233", LoginScreen},
-			"123": {"123", RegisterScreen},
+			"注入": {"注入", ModInjectPanel},
+			"开端": {"开端", ClientLaunchPanel},
 		}
 		PanelIndex = map[string][]string{
-			"": {"233", "123"}}
+			"": {"注入", "开端"}}
 
 		Init()
 	}
@@ -56,7 +55,7 @@ func LoginScreen(_ fyne.Window) fyne.CanvasObject {
 		button.SetText("登录...")
 		go func() {
 
-			time.Sleep(time.Second)
+			//time.Sleep(time.Second)
 			err := handleLogin(usernameInput.Text, passwordInput.Text)
 			if err != nil {
 				dialog.ShowError(err, Window)

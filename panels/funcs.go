@@ -6,10 +6,6 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-const preferenceCurrentPanel = "登录"
-
-var topWindow fyne.Window
-
 func makeNav(setMenu func(panel Panel), loadPrevious bool) fyne.CanvasObject {
 	a := fyne.CurrentApp()
 

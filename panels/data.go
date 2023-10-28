@@ -12,6 +12,10 @@ import (
 var MainMenu *fyne.MainMenu
 var Theme *fyne.Container
 
+const preferenceCurrentPanel = "登录"
+
+var topWindow fyne.Window
+
 const (
 	emptyInputDataError  = "进来的数据不能是空的"
 	nonexistentUserError = "用户是不存在的"
