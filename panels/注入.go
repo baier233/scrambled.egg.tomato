@@ -2,16 +2,20 @@ package panels
 
 import (
 	"fmt"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
+	"strings"
 )
+
+var tempLists []string
 
 func ModInjectPanel(_ fyne.Window) fyne.CanvasObject {
 	selectedLabel := widget.NewLabel("No selection")
-	data := binding.BindStringList(&[]string{"Item 1", "Item 2", "Item 3"})
+	data := binding.BindStringList(&tempLists)
 
 	list := widget.NewListWithData(data,
 		func() fyne.CanvasObject {
@@ -21,9 +25,52 @@ func ModInjectPanel(_ fyne.Window) fyne.CanvasObject {
 			o.(*widget.Label).Bind(i.(binding.String))
 		})
 
-	add := widget.NewButton("Append", func() {
-		val := fmt.Sprintf("Item %d", data.Length()+1)
-		data.Append(val)
+	add := widget.NewButton("添加", func() {
+		fileopen := dialog.NewFileOpen(func(closer fyne.URIReadCloser, err error) {
+			if err != nil {
+				fmt.Println(err.Error())
+
+				return
+			}
+			if closer == nil {
+				return
+			}
+			fmt.Println(closer.URI().Path())
+			err = data.Append(closer.URI().Name())
+			if err != nil {
+				fmt.Println(err.Error())
+				return
+			}
+
+		}, Window)
+		fileopen.SetFilter(storage.NewExtensionFileFilter([]string{".jar"}))
+		fileopen.Show()
+
+	})
+
+	del := widget.NewButton("删除", func() {
+
+		if strings.EqualFold(selectedLabel.Text, "No selection") {
+			return
+		}
+		lists, err := data.Get()
+		if err != nil {
+			return
+		}
+		var count = -1
+		for i, s := range lists {
+			if s == selectedLabel.Text {
+				count = i
+			}
+		}
+		if count == -1 {
+			return
+		}
+		lists = append(lists[:count], lists[count+1:]...)
+		err = data.Set(lists)
+		if err != nil {
+			return
+		}
 	})
 
 	list.OnSelected = func(id widget.ListItemID) {
@@ -36,9 +83,5 @@ func ModInjectPanel(_ fyne.Window) fyne.CanvasObject {
 		}
 	}
 
-	button := widget.NewButton("注入！", func() {
-		fmt.Println(selectedLabel.Text)
-	})
-	_ = button
-	return container.NewBorder(nil, container.NewVBox(add, button), nil, nil, list)
+	return container.NewBorder(nil, container.NewVBox(container.NewVBox(add, Line), widget.NewSeparator(), container.NewVBox(del, Line)), nil, nil, list)
 }

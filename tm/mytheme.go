@@ -56,11 +56,13 @@ func (m MyTheme) Font(style fyne.TextStyle) fyne.Resource {
 
 func (m MyTheme) Size(name fyne.ThemeSizeName) float32 {
 	if IsDark {
-
-		panels.Line.StrokeColor = color.White
+		go func() {
+			panels.Line.StrokeColor = color.White
+		}()
 		return theme.DarkTheme().Size(name)
 	}
-
-	panels.Line.StrokeColor = color.Gray16{0x9FFF}
+	go func() {
+		panels.Line.StrokeColor = color.Gray16{0x9FFF}
+	}()
 	return theme.LightTheme().Size(name)
 }
