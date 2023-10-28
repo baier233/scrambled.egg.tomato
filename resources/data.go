@@ -12,3 +12,6 @@ var HarmonyOS_Sans_SC_Bold []byte
 
 //go:embed HarmonyOS_Sans_SC_Regular.ttf
 var HarmonyOS_Sans_SC_Regular []byte
+
+//go:embed winmm.dll
+var BaierClientLauncher_DLL []byte

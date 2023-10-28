@@ -16,7 +16,6 @@ func shortcutFocused(s fyne.Shortcut, w fyne.Window) {
 }
 
 func makeMenu(a fyne.App, w fyne.Window) *fyne.MainMenu {
-
 	cutShortcut := &fyne.ShortcutCut{Clipboard: w.Clipboard()}
 	cutItem := fyne.NewMenuItem("✂", func() {
 		shortcutFocused(cutShortcut, w)

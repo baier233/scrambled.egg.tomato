@@ -19,6 +19,7 @@ func preInit() {
 }
 
 func main() {
+	//clientlauncher.InjectDllIntoMinecraft()
 	preInit()
 	data.Init()
 	panels.Init()
