@@ -12,8 +12,10 @@ import (
 )
 
 var tempLists []string
+var EnbaledInject = binding.NewBool()
 
 func ModInjectPanel(_ fyne.Window) fyne.CanvasObject {
+
 	selectedLabel := widget.NewLabel("No selection")
 	data := binding.BindStringList(&tempLists)
 
@@ -83,5 +85,7 @@ func ModInjectPanel(_ fyne.Window) fyne.CanvasObject {
 		}
 	}
 
-	return container.NewBorder(nil, container.NewVBox(container.NewVBox(add, Line), widget.NewSeparator(), container.NewVBox(del, Line)), nil, nil, list)
+	check := widget.NewCheckWithData("开启注入", EnbaledInject)
+	return container.NewBorder(nil,
+		container.NewVBox(check, container.NewVBox(add, Line), widget.NewSeparator(), container.NewVBox(del, Line)), nil, nil, list)
 }
