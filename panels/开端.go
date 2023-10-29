@@ -10,6 +10,9 @@ import (
 var CheckGroup = widget.NewCheckGroup([]string{"开启开端", "开启proxy"}, func(s []string) { fmt.Println("selected", s) })
 var selectEntryStr = []string{"BaierCL"}
 
+func onSelect(s []string) {
+
+}
 func ClientLaunchPanel(_ fyne.Window) fyne.CanvasObject {
 
 	selectEntry := widget.NewSelectEntry(selectEntryStr)

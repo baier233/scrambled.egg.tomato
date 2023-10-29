@@ -12,7 +12,7 @@ import (
 )
 
 var tempLists []string
-var EnbaledInject = binding.NewBool()
+var EnabledInject = binding.NewBool()
 
 func ModInjectPanel(_ fyne.Window) fyne.CanvasObject {
 
@@ -28,10 +28,9 @@ func ModInjectPanel(_ fyne.Window) fyne.CanvasObject {
 		})
 
 	add := widget.NewButton("添加", func() {
-		fileopen := dialog.NewFileOpen(func(closer fyne.URIReadCloser, err error) {
+		fileOpen := dialog.NewFileOpen(func(closer fyne.URIReadCloser, err error) {
 			if err != nil {
 				fmt.Println(err.Error())
-
 				return
 			}
 			if closer == nil {
@@ -45,8 +44,8 @@ func ModInjectPanel(_ fyne.Window) fyne.CanvasObject {
 			}
 
 		}, Window)
-		fileopen.SetFilter(storage.NewExtensionFileFilter([]string{".jar"}))
-		fileopen.Show()
+		fileOpen.SetFilter(storage.NewExtensionFileFilter([]string{".jar"}))
+		fileOpen.Show()
 
 	})
 
@@ -85,7 +84,7 @@ func ModInjectPanel(_ fyne.Window) fyne.CanvasObject {
 		}
 	}
 
-	check := widget.NewCheckWithData("开启注入", EnbaledInject)
+	check := widget.NewCheckWithData("开启注入", EnabledInject)
 	return container.NewBorder(nil,
 		container.NewVBox(check, container.NewVBox(add, Line), widget.NewSeparator(), container.NewVBox(del, Line)), nil, nil, list)
 }

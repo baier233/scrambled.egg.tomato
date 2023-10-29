@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ScrambledEggwithTomato/clientlauncher"
 	"ScrambledEggwithTomato/data"
 	"ScrambledEggwithTomato/panels"
 	"ScrambledEggwithTomato/tm"
@@ -19,11 +20,12 @@ func preInit() {
 }
 
 func main() {
-	//clientlauncher.InjectDllIntoMinecraft()
+	clientlauncher.InjectDllIntoMinecraft()
 	preInit()
 	data.Init()
 	panels.Init()
 	tm.IsDark = true
 	panels.MyApp.Settings().SetTheme(&tm.MyTheme{})
 	panels.Window.ShowAndRun()
+
 }

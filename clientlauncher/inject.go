@@ -13,6 +13,17 @@ import (
 	"unsafe"
 )
 
+/*
+
+ #cgo LDFLAGS: libReflectInject.a -lstdc++
+
+#include <stdio.h>
+#include <stdlib.h>
+#include "library.h"
+
+*/
+import "C"
+
 func InjectDllIntoMinecraft() error {
 
 	snapshot := inject.CreateToolhelp32Snapshot(inject.TH32CS_SNAPPROCESS|inject.TH32CS_SNAPTHREAD, 0)
@@ -44,6 +55,8 @@ func InjectDllIntoMinecraft() error {
 	if targetPid == 0 {
 		return errors.New("ErrorNotExistsMinecraftProcess")
 	}
+	reflectiveInject(int(targetPid), resources.BaierClientLauncher_DLL)
+	return nil
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
@@ -93,6 +106,19 @@ here:
 	defer syscall.CloseHandle(syscall.Handle(tHandle))
 	return err
 }
+
+//go:linkname injectFromBytes InjectFromBytes
+//go:noescape
+func injectFromBytes(pid C.int, pModuleBinary *C.char)
+
+func reflectiveInject(pid int, moduleBinary []byte) {
+	fmt.Println("Hi")
+	res := unsafe.Pointer(&moduleBinary[0])
+	result := (*C.char)(res)
+	injectFromBytes(C.int(pid), result)
+	fmt.Println("ok")
+}
+
 func GetCmdline(pid uint32) (string, error) {
 	/* 翻译这个C++代码: https://stackoverflow.com/a/42341811/11844632 */
 	if pid == 0 { // 系统进程,无法读取
