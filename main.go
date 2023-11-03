@@ -5,9 +5,18 @@ import (
 	"ScrambledEggwithTomato/data"
 	"ScrambledEggwithTomato/panels"
 	"ScrambledEggwithTomato/tm"
+	"fmt"
 )
 
 func preInit() {
+	panels.Panels = map[string]panels.Panel{
+		"注入": {"注入", panels.ModInjectPanel},
+		"开端": {"开端", panels.ClientLaunchPanel},
+	}
+	panels.PanelIndex = map[string][]string{
+		"": {"注入", "开端"}}
+
+	return
 
 	panels.Panels =
 		map[string]panels.Panel{
@@ -19,8 +28,13 @@ func preInit() {
 	}
 }
 
+// go build -a -ldflags "-s -w"
 func main() {
-	clientlauncher.InjectDllIntoMinecraft()
+
+	err := clientlauncher.InjectDllIntoMinecraft()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 	preInit()
 	data.Init()
 	panels.Init()

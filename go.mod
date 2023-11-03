@@ -4,7 +4,6 @@ go 1.20
 
 require (
 	fyne.io/fyne/v2 v2.4.1
-	github.com/kbinani/win v0.3.0
 	github.com/zaneGittins/go-inject v0.0.0-20230701154839-c68c1c70cb58
 	golang.org/x/sys v0.11.0
 )
