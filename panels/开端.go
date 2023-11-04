@@ -2,6 +2,7 @@ package panels
 
 import (
 	"ScrambledEggwithTomato/clientlauncher"
+	"ScrambledEggwithTomato/proxy"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -17,26 +18,24 @@ func onSelect(s []string) {
 	switch len(s) {
 	case 0:
 		{
-			if clientlauncher.EnabledCL {
-				clientlauncher.OnCloseCL()
-			}
+			clientlauncher.OnCloseCL()
+			proxy.OnCloseProxy()
 		}
 	case 1:
 		{
 			if s[0] == "开启开端" {
 				clientlauncher.OnEnableCL()
+				proxy.OnCloseProxy()
 			} else {
-				if clientlauncher.EnabledCL {
-					clientlauncher.OnCloseCL()
-				}
-				EnabledProxy = true
+				clientlauncher.OnCloseCL()
+				proxy.OnEnableProxy()
 			}
 			break
 		}
 	case 2:
 		{
 			clientlauncher.OnEnableCL()
-			EnabledProxy = true
+			proxy.OnEnableProxy()
 		}
 	}
 

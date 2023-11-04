@@ -7,9 +7,11 @@ import (
 	"ScrambledEggwithTomato/utils"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -22,7 +24,7 @@ import "C"
 
 var pidContainer = utils.NewStringContainer()
 
-func InjectDllIntoMinecraft() error {
+func InjectDllIntoMinecraft(serverData *ServerData) error {
 
 	var targetPid = uint32(0)
 	{
@@ -58,9 +60,33 @@ func InjectDllIntoMinecraft() error {
 						//mylogger.Log("检测到一个已经处理过的java进程 : " + strconv.Itoa(int(processEntry.ProcessID)))
 						continue
 					}
+					var serverValue, portValue, usernameValue string
 					str := fmt.Sprintf("Process Name: %s, PID: %d ", exeName, processEntry.ProcessID)
 					mylogger.Log("已找到Minecraft，" + str + " 准备执行注入操作...")
+					serverPattern := "--server\\s+([^\\s]+)"
+					serverRegexp := regexp.MustCompile(serverPattern)
+					serverMatches := serverRegexp.FindStringSubmatch(cmdline)
+					if len(serverMatches) > 1 {
+						serverValue = serverMatches[1]
+					}
 
+					portPattern := "--port\\s+([^\\s]+)"
+					portRegexp := regexp.MustCompile(portPattern)
+					portMatches := portRegexp.FindStringSubmatch(cmdline)
+					if len(portMatches) > 1 {
+						portValue = portMatches[1]
+					}
+
+					usernamePattern := "--username\\s+([^\\s]+)"
+					usernameRegexp := regexp.MustCompile(usernamePattern)
+					usernameMatches := usernameRegexp.FindStringSubmatch(cmdline)
+					if len(usernameMatches) > 1 {
+						usernameValue = usernameMatches[1]
+					}
+
+					serverData.ServerIP = serverValue
+					serverData.ServerPort = portValue
+					serverData.Username = usernameValue
 					targetPid = processEntry.ProcessID
 					break
 				}
@@ -70,6 +96,9 @@ func InjectDllIntoMinecraft() error {
 	if targetPid == 0 {
 		return global.ErrorNonExistentMinecraftProcess
 	}
+
+	time.Sleep(time.Second)
+
 	result := C.inject(C.int(targetPid), (*C.char)(unsafe.Pointer(&resources.BaierClientLauncher_DLL[0])))
 	if int(result) == 0 {
 		return global.ErrortInjectFaield
