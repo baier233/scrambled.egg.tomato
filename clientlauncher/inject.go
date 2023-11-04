@@ -1,123 +1,164 @@
 package clientlauncher
 
 import (
+	"ScrambledEggwithTomato/global"
+	"ScrambledEggwithTomato/mylogger"
 	"ScrambledEggwithTomato/resources"
-	"errors"
+	"ScrambledEggwithTomato/utils"
 	"fmt"
-	"os"
 	"reflect"
+	"regexp"
+	"strconv"
 	"strings"
 	"syscall"
+	"time"
 	"unsafe"
 
-	"github.com/zaneGittins/go-inject/inject"
 	"golang.org/x/sys/windows"
 )
 
-/*
-
- #cgo LDFLAGS: libReflectInject.a -lstdc++
-
-#include <stdio.h>
-#include <stdlib.h>
-#include "library.h"
-
-*/
+//#include "inject.h"
+//#include <stdlib.h>
+//#cgo LDFLAGS: -L./ -ltest -lstdc++ -static
 import "C"
 
-func InjectDllIntoMinecraft() error {
+var pidContainer = utils.NewStringContainer()
 
-	snapshot := inject.CreateToolhelp32Snapshot(inject.TH32CS_SNAPPROCESS|inject.TH32CS_SNAPTHREAD, 0)
+func InjectDllIntoMinecraft(serverData *ServerData) error {
+
 	var targetPid = uint32(0)
-	var processEntry windows.ProcessEntry32
-	processEntry.Size = uint32(unsafe.Sizeof(processEntry))
-	_, err := inject.Process32Next(snapshot, &processEntry)
-	if err != nil && err != windows.Errno(0) {
-		fmt.Println(err)
-		return err
-	}
+	{
+		snapshot, err := syscall.CreateToolhelp32Snapshot(syscall.TH32CS_SNAPPROCESS, 0)
+		if err != nil {
+			return global.ErrorCreatCreateToolhelp32SnapshotFailed
+		}
 
-	for true {
-		cmdline, err := GetCmdline(processEntry.ProcessID)
-		if err == nil {
-			if strings.Contains(strings.ToUpper(cmdline), strings.ToUpper("-DlauncherControlPort")) {
-				fmt.Println(cmdline)
-				fmt.Println()
-				targetPid = processEntry.ProcessID
-				break
+		defer syscall.CloseHandle(snapshot)
+
+		var processEntry syscall.ProcessEntry32
+
+		processEntry.Size = uint32(unsafe.Sizeof(processEntry))
+
+		for syscall.Process32Next(snapshot, &processEntry) == nil {
+			exeName := syscall.UTF16ToString(processEntry.ExeFile[:])
+
+			// if strings.Compare(exeName, "notepad.exe") == 0 {
+
+			// 	fmt.Printf("Process Name: %s, PID: %d\n", exeName, processEntry.ProcessID)
+			// 	targetPid = processEntry.ProcessID
+			// 	break
+			// }
+			if strings.Compare(exeName, "javaw.exe") != 0 {
+				continue
+			}
+
+			cmdline, err := GetCmdline(processEntry.ProcessID)
+			if err == nil {
+
+				if strings.Contains(strings.ToUpper(cmdline), strings.ToUpper("-DlauncherControlPort")) {
+					if pidContainer.Contains(strconv.Itoa(int(processEntry.ProcessID))) {
+						//mylogger.Log("检测到一个已经处理过的java进程 : " + strconv.Itoa(int(processEntry.ProcessID)))
+						continue
+					}
+					var serverValue, portValue, usernameValue string
+					str := fmt.Sprintf("Process Name: %s, PID: %d ", exeName, processEntry.ProcessID)
+					mylogger.Log("已找到Minecraft，" + str + " 准备执行注入操作...")
+					serverPattern := "--server\\s+([^\\s]+)"
+					serverRegexp := regexp.MustCompile(serverPattern)
+					serverMatches := serverRegexp.FindStringSubmatch(cmdline)
+					if len(serverMatches) > 1 {
+						serverValue = serverMatches[1]
+					}
+
+					portPattern := "--port\\s+([^\\s]+)"
+					portRegexp := regexp.MustCompile(portPattern)
+					portMatches := portRegexp.FindStringSubmatch(cmdline)
+					if len(portMatches) > 1 {
+						portValue = portMatches[1]
+					}
+
+					usernamePattern := "--username\\s+([^\\s]+)"
+					usernameRegexp := regexp.MustCompile(usernamePattern)
+					usernameMatches := usernameRegexp.FindStringSubmatch(cmdline)
+					if len(usernameMatches) > 1 {
+						usernameValue = usernameMatches[1]
+					}
+
+					serverData.ServerIP = serverValue
+					serverData.ServerPort = portValue
+					serverData.Username = usernameValue
+					targetPid = processEntry.ProcessID
+					break
+				}
 			}
 		}
-		_, err = inject.Process32Next(snapshot, &processEntry)
-		if err == windows.Errno(18) {
-			break
-		}
 	}
-
 	if targetPid == 0 {
-		return errors.New("ErrorNotExistsMinecraftProcess")
+		return global.ErrorNonExistentMinecraftProcess
 	}
-	reflectiveInject(int(targetPid), resources.BaierClientLauncher_DLL)
+
+	time.Sleep(time.Second)
+
+	result := C.inject(C.int(targetPid), (*C.char)(unsafe.Pointer(&resources.BaierClientLauncher_DLL[0])))
+	if int(result) == 0 {
+		return global.ErrortInjectFaield
+	}
+	pidContainer.Add(strconv.Itoa(int(targetPid)))
 	return nil
-	wd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	dPath := wd + "\\BaierCL.dll"
 
-here:
-	_, err = os.Stat(dPath)
-	if errors.Is(err, os.ErrNotExist) {
-		file, err := os.Create(dPath)
-		if err != nil {
-			return err
-		}
-		_, err = file.Write(resources.BaierClientLauncher_DLL)
-		if err != nil {
-			return err
-		}
-		file.Close()
-		goto here
-	}
+	//以下位远线注入 以上为内存反射注入 优先使用上面的方案
 
-	kernel32 := windows.NewLazyDLL("kernel32.dll")
-	pHandle, err := windows.OpenProcess(windows.PROCESS_CREATE_THREAD|windows.PROCESS_VM_OPERATION|windows.PROCESS_VM_WRITE|windows.PROCESS_VM_READ|windows.PROCESS_QUERY_INFORMATION, false, targetPid)
-	if err != nil {
-		return err
-	}
-	VirtualAllocEx := kernel32.NewProc("VirtualAllocEx")
-	vAlloc, _, err := VirtualAllocEx.Call(uintptr(pHandle), 0, uintptr(len(dPath)+1), windows.MEM_RESERVE|windows.MEM_COMMIT, windows.PAGE_EXECUTE_READWRITE)
+	// 	fmt.Println(result)
+	// 	return nil
+	// 	wd, err := os.Getwd()
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	dPath := wd + "\\BaierCL.dll"
 
-	bPtrDpath, err := windows.BytePtrFromString(dPath)
-	if err != nil {
-		return err
-	}
+	// here:
+	// 	_, err = os.Stat(dPath)
+	// 	if errors.Is(err, os.ErrNotExist) {
+	// 		file, err := os.Create(dPath)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		_, err = file.Write(resources.BaierClientLauncher_DLL)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		file.Close()
+	// 		goto here
+	// 	}
 
-	Zero := uintptr(0)
-	err = windows.WriteProcessMemory(pHandle, vAlloc, bPtrDpath, uintptr(len(dPath)+1), &Zero)
-	if err != nil {
-		return err
-	}
+	// 	kernel32 := windows.NewLazyDLL("kernel32.dll")
+	// 	pHandle, err := windows.OpenProcess(windows.PROCESS_CREATE_THREAD|windows.PROCESS_VM_OPERATION|windows.PROCESS_VM_WRITE|windows.PROCESS_VM_READ|windows.PROCESS_QUERY_INFORMATION, false, targetPid)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	VirtualAllocEx := kernel32.NewProc("VirtualAllocEx")
+	// 	vAlloc, _, err := VirtualAllocEx.Call(uintptr(pHandle), 0, uintptr(len(dPath)+1), windows.MEM_RESERVE|windows.MEM_COMMIT, windows.PAGE_EXECUTE_READWRITE)
 
-	LoadLibAddy, err := syscall.GetProcAddress(syscall.Handle(kernel32.Handle()), "LoadLibraryA")
-	if err != nil {
-		return err
-	}
+	// 	bPtrDpath, err := windows.BytePtrFromString(dPath)
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-	tHandle, _, err := kernel32.NewProc("CreateRemoteThread").Call(uintptr(pHandle), 0, 0, LoadLibAddy, vAlloc, 0, 0)
-	defer syscall.CloseHandle(syscall.Handle(tHandle))
-	return err
-}
+	// 	Zero := uintptr(0)
+	// 	err = windows.WriteProcessMemory(pHandle, vAlloc, bPtrDpath, uintptr(len(dPath)+1), &Zero)
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-//go:linkname injectFromBytes InjectFromBytes
-//go:noescape
-func injectFromBytes(pid C.int, pModuleBinary *C.char)
+	// 	LoadLibAddy, err := syscall.GetProcAddress(syscall.Handle(kernel32.Handle()), "LoadLibraryA")
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-func reflectiveInject(pid int, moduleBinary []byte) {
-	fmt.Println("Hi")
-	res := unsafe.Pointer(&moduleBinary[0])
-	result := (*C.char)(res)
-	injectFromBytes(C.int(pid), result)
-	fmt.Println("ok")
+	// 	tHandle, _, err := kernel32.NewProc("CreateRemoteThread").Call(uintptr(pHandle), 0, 0, LoadLibAddy, vAlloc, 0, 0)
+	// 	defer syscall.CloseHandle(syscall.Handle(tHandle))
+
+	// 	return err
 }
 
 func GetCmdline(pid uint32) (string, error) {
@@ -152,7 +193,7 @@ func GetCmdline(pid uint32) (string, error) {
 	d := *(*[]byte)(unsafe.Pointer(&reflect.SliceHeader{
 		Data: uintptr(unsafe.Pointer(&addr)),
 		Len:  8, Cap: 8}))
-	err = windows.ReadProcessMemory(h, pbi.PebBaseAddress+32, // ntddk.h,ProcessParameters偏移32字节
+	err = windows.ReadProcessMemory(h, pbi.PebBaseAddress+0x20, // ntddk.h,ProcessParameters偏移32字节
 		&d[0], uintptr(len(d)), nil)
 	if err != nil {
 		return "", err
@@ -163,7 +204,7 @@ func GetCmdline(pid uint32) (string, error) {
 	d = *(*[]byte)(unsafe.Pointer(&reflect.SliceHeader{
 		Data: uintptr(unsafe.Pointer(&commandLine)),
 		Len:  int(Len), Cap: int(Len)}))
-	err = windows.ReadProcessMemory(h, uintptr(addr+112), // winternl.h,分析文件偏移
+	err = windows.ReadProcessMemory(h, uintptr(addr+0x70), // winternl.h,分析文件偏移
 		&d[0], Len, nil)
 	if err != nil {
 		return "", err

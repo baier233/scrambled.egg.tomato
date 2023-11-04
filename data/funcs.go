@@ -1,6 +1,7 @@
 package data
 
 import (
+	"ScrambledEggwithTomato/global"
 	"ScrambledEggwithTomato/panels"
 	"ScrambledEggwithTomato/tm"
 
@@ -58,4 +59,5 @@ func Init() {
 	panels.Window = panels.MyApp.NewWindow("炒.西红柿.鸡蛋")
 	panels.MainMenu = makeMenu(panels.MyApp, panels.Window)
 	makeTheme()
+	global.Window = panels.Window
 }
