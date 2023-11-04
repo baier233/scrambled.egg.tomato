@@ -4,8 +4,10 @@ import (
 	"ScrambledEggwithTomato/global"
 	"ScrambledEggwithTomato/mylogger"
 	"ScrambledEggwithTomato/resources"
+	"ScrambledEggwithTomato/utils"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"syscall"
 	"unsafe"
@@ -15,10 +17,10 @@ import (
 
 //#include "inject.h"
 //#include <stdlib.h>
-//#cgo LDFLAGS: -L./ -ltest -lstdc++ -lunwind -static
+//#cgo LDFLAGS: -L./ -ltest -lstdc++ -static
 import "C"
 
-var mapOfPID map[string]string
+var pidContainer = utils.NewStringContainer()
 
 func InjectDllIntoMinecraft() error {
 
@@ -50,29 +52,33 @@ func InjectDllIntoMinecraft() error {
 
 			cmdline, err := GetCmdline(processEntry.ProcessID)
 			if err == nil {
-				fmt.Printf("Process Name: %s, PID: %d\n", exeName, processEntry.ProcessID)
+
 				if strings.Contains(strings.ToUpper(cmdline), strings.ToUpper("-DlauncherControlPort")) {
-					if mapOfPID[string(rune(targetPid))] == "Ok" {
+					if pidContainer.Contains(strconv.Itoa(int(processEntry.ProcessID))) {
+						//mylogger.Log("检测到一个已经处理过的java进程 : " + strconv.Itoa(int(processEntry.ProcessID)))
 						continue
 					}
-					mylogger.Log("已找到Minecraft，准备执行注入操作...")
-					mapOfPID[string(rune(targetPid))] = "Ok"
+					str := fmt.Sprintf("Process Name: %s, PID: %d ", exeName, processEntry.ProcessID)
+					mylogger.Log("已找到Minecraft，" + str + " 准备执行注入操作...")
+
 					targetPid = processEntry.ProcessID
 					break
 				}
 			}
 		}
 	}
-
 	if targetPid == 0 {
 		return global.ErrorNonExistentMinecraftProcess
 	}
-	fmt.Println(len(resources.BaierClientLauncher_DLL))
 	result := C.inject(C.int(targetPid), (*C.char)(unsafe.Pointer(&resources.BaierClientLauncher_DLL[0])))
-	if int(result) != 1 {
+	if int(result) == 0 {
 		return global.ErrortInjectFaield
 	}
+	pidContainer.Add(strconv.Itoa(int(targetPid)))
 	return nil
+
+	//以下位远线注入 以上为内存反射注入 优先使用上面的方案
+
 	// 	fmt.Println(result)
 	// 	return nil
 	// 	wd, err := os.Getwd()
@@ -158,7 +164,7 @@ func GetCmdline(pid uint32) (string, error) {
 	d := *(*[]byte)(unsafe.Pointer(&reflect.SliceHeader{
 		Data: uintptr(unsafe.Pointer(&addr)),
 		Len:  8, Cap: 8}))
-	err = windows.ReadProcessMemory(h, pbi.PebBaseAddress+32, // ntddk.h,ProcessParameters偏移32字节
+	err = windows.ReadProcessMemory(h, pbi.PebBaseAddress+0x20, // ntddk.h,ProcessParameters偏移32字节
 		&d[0], uintptr(len(d)), nil)
 	if err != nil {
 		return "", err
@@ -169,7 +175,7 @@ func GetCmdline(pid uint32) (string, error) {
 	d = *(*[]byte)(unsafe.Pointer(&reflect.SliceHeader{
 		Data: uintptr(unsafe.Pointer(&commandLine)),
 		Len:  int(Len), Cap: int(Len)}))
-	err = windows.ReadProcessMemory(h, uintptr(addr+112), // winternl.h,分析文件偏移
+	err = windows.ReadProcessMemory(h, uintptr(addr+0x70), // winternl.h,分析文件偏移
 		&d[0], Len, nil)
 	if err != nil {
 		return "", err

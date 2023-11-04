@@ -16,7 +16,7 @@ func OnEnableCL() {
 		mylogger.Log("已开启CL...")
 		go ClientLaunchProcesser()
 	}
-	
+
 }
 func OnCloseCL() {
 	EnabledCL = false
@@ -27,9 +27,8 @@ func ClientLaunchProcesser() {
 		err := InjectDllIntoMinecraft()
 		if err == nil {
 			mylogger.Log("Cl加载成功...")
-		}
-		if err != global.ErrorNonExistentMinecraftProcess {
-			mylogger.Log("出现不可预期的错误 : " + err.Error())
+		} else if err != global.ErrorNonExistentMinecraftProcess {
+			mylogger.Log("出现了不可预期的错误:" + err.Error())
 		}
 	}
 	mylogger.Log("已关闭CL...")
