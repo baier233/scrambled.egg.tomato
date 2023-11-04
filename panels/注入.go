@@ -2,13 +2,15 @@ package panels
 
 import (
 	"fmt"
+	"os"
+	"strings"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
-	"strings"
 )
 
 var tempLists []string
@@ -37,6 +39,17 @@ func ModInjectPanel(_ fyne.Window) fyne.CanvasObject {
 				return
 			}
 			fmt.Println(closer.URI().Path())
+
+			err = os.Mkdir(getCustomModPath(), 0755)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+
+			err = copy(closer.URI().Path(), getCustomModPath()+"\\"+closer.URI().Name())
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+
 			err = data.Append(closer.URI().Name())
 			if err != nil {
 				fmt.Println(err.Error())

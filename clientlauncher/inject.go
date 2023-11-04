@@ -4,13 +4,14 @@ import (
 	"ScrambledEggwithTomato/resources"
 	"errors"
 	"fmt"
-	"github.com/zaneGittins/go-inject/inject"
-	"golang.org/x/sys/windows"
 	"os"
 	"reflect"
 	"strings"
 	"syscall"
 	"unsafe"
+
+	"github.com/zaneGittins/go-inject/inject"
+	"golang.org/x/sys/windows"
 )
 
 /*
