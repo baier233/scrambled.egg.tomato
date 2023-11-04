@@ -1,11 +1,13 @@
 package main
 
 import (
-	"ScrambledEggwithTomato/clientlauncher"
 	"ScrambledEggwithTomato/data"
+	"ScrambledEggwithTomato/mylogger"
 	"ScrambledEggwithTomato/panels"
 	"ScrambledEggwithTomato/tm"
-	"fmt"
+	"log"
+
+	"github.com/fatih/color"
 )
 
 func preInit() {
@@ -31,15 +33,19 @@ func preInit() {
 // go build -a -ldflags "-s -w"
 func main() {
 
-	err := clientlauncher.InjectDllIntoMinecraft()
-	if err != nil {
-		fmt.Println(err.Error())
-	}
+	// err := clientlauncher.InjectDllIntoMinecraft()
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
+	red := color.New(color.FgHiRed, color.Bold).SprintFunc()
+	log.SetPrefix("[" + red(" 炒.西红柿.鸡蛋 ") + "] ")
 	preInit()
 	data.Init()
 	panels.Init()
 	tm.IsDark = true
 	panels.MyApp.Settings().SetTheme(&tm.MyTheme{})
+	mylogger.Log("工具箱启动...")
+	defer mylogger.Log("工具箱关闭...")
 	panels.Window.ShowAndRun()
 
 }

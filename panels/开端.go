@@ -1,6 +1,8 @@
 package panels
 
 import (
+	"ScrambledEggwithTomato/clientlauncher"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
@@ -9,33 +11,35 @@ import (
 var CheckGroup = widget.NewCheckGroup([]string{"开启开端", "开启proxy"}, onSelect)
 var selectEntryStr = []string{"BaierCL"}
 
-var EnabledCL = false
 var EnabledProxy = false
 
 func onSelect(s []string) {
 	switch len(s) {
+	case 0:
+		{
+			if clientlauncher.EnabledCL {
+				clientlauncher.OnCloseCL()
+			}
+		}
 	case 1:
 		{
 			if s[0] == "开启开端" {
-				EnabledCL = true
+				clientlauncher.OnEnableCL()
 			} else {
+				if clientlauncher.EnabledCL {
+					clientlauncher.OnCloseCL()
+				}
 				EnabledProxy = true
 			}
 			break
 		}
 	case 2:
 		{
-			EnabledCL = true
+			clientlauncher.OnEnableCL()
 			EnabledProxy = true
 		}
 	}
-	if len(s) == 1 {
-		if s[0] == "开启开端" {
-			EnabledCL = true
-		} else {
-			EnabledProxy = true
-		}
-	}
+
 }
 func ClientLaunchPanel(_ fyne.Window) fyne.CanvasObject {
 

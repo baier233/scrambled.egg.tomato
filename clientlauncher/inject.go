@@ -1,8 +1,9 @@
 package clientlauncher
 
 import (
+	"ScrambledEggwithTomato/global"
+	"ScrambledEggwithTomato/mylogger"
 	"ScrambledEggwithTomato/resources"
-	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -17,13 +18,15 @@ import (
 //#cgo LDFLAGS: -L./ -ltest -lstdc++ -lunwind -static
 import "C"
 
+var mapOfPID map[string]string
+
 func InjectDllIntoMinecraft() error {
 
 	var targetPid = uint32(0)
 	{
 		snapshot, err := syscall.CreateToolhelp32Snapshot(syscall.TH32CS_SNAPPROCESS, 0)
 		if err != nil {
-			return errors.New("ErrorCreatCreateToolhelp32SnapshotFailed")
+			return global.ErrorCreatCreateToolhelp32SnapshotFailed
 		}
 
 		defer syscall.CloseHandle(snapshot)
@@ -49,8 +52,11 @@ func InjectDllIntoMinecraft() error {
 			if err == nil {
 				fmt.Printf("Process Name: %s, PID: %d\n", exeName, processEntry.ProcessID)
 				if strings.Contains(strings.ToUpper(cmdline), strings.ToUpper("-DlauncherControlPort")) {
-					fmt.Println(cmdline)
-					fmt.Println()
+					if mapOfPID[string(rune(targetPid))] == "Ok" {
+						continue
+					}
+					mylogger.Log("已找到Minecraft，准备执行注入操作...")
+					mapOfPID[string(rune(targetPid))] = "Ok"
 					targetPid = processEntry.ProcessID
 					break
 				}
@@ -59,12 +65,12 @@ func InjectDllIntoMinecraft() error {
 	}
 
 	if targetPid == 0 {
-		return errors.New("ErrorNonExistentMinecraftProcess")
+		return global.ErrorNonExistentMinecraftProcess
 	}
 	fmt.Println(len(resources.BaierClientLauncher_DLL))
 	result := C.inject(C.int(targetPid), (*C.char)(unsafe.Pointer(&resources.BaierClientLauncher_DLL[0])))
 	if int(result) != 1 {
-		return errors.New("ErrortInjectFaield")
+		return global.ErrortInjectFaield
 	}
 	return nil
 	// 	fmt.Println(result)
