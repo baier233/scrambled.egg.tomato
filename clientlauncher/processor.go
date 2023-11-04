@@ -25,7 +25,7 @@ func OnCloseCL() {
 var lock = false
 
 func ClientLaunchProcessor() {
-	defer mylogger.Log("已关闭CL...")
+	defer mylogger.Log("CL协程守护结束...")
 	if lock {
 		return
 	}
@@ -33,6 +33,7 @@ func ClientLaunchProcessor() {
 	defer func() {
 		lock = false
 	}()
+	mylogger.Log("CL协程守护中...")
 	for EnabledCL {
 		var serverData = NewServerData()
 		err := InjectDllIntoMinecraft(serverData)
