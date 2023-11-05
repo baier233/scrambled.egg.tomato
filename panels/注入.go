@@ -1,6 +1,8 @@
 package panels
 
 import (
+	"ScrambledEggwithTomato/clientlauncher"
+	"ScrambledEggwithTomato/global"
 	"ScrambledEggwithTomato/modloader"
 	"ScrambledEggwithTomato/mylogger"
 	"ScrambledEggwithTomato/utils"
@@ -28,7 +30,25 @@ func getCustomModPath() string {
 	}
 	return absPath + "\\eggs"
 }
+func appendIntoData(name string, data *binding.ExternalStringList) {
+	strs, err := (*data).Get()
+	if err != nil {
+		return
+	}
 
+	for _, str := range strs {
+		if str == name {
+			return
+		}
+	}
+
+	err = (*data).Append(name)
+	if err != nil {
+		mylogger.Log("操作注入列表时出现预期之外的错误：" + err.Error())
+		return
+	}
+
+}
 func ModInjectPanel(_ fyne.Window) fyne.CanvasObject {
 
 	selectedLabel := widget.NewLabel("No selection")
@@ -54,11 +74,7 @@ func ModInjectPanel(_ fyne.Window) fyne.CanvasObject {
 			return err
 		}
 		if !info.IsDir() {
-			err = data.Append(info.Name())
-			if err != nil {
-				mylogger.Log("操作注入列表时出现预期之外的错误：" + err.Error())
-				return err
-			}
+			appendIntoData(info.Name(), &data)
 		}
 		return nil
 	})
@@ -78,24 +94,7 @@ func ModInjectPanel(_ fyne.Window) fyne.CanvasObject {
 				mylogger.Log("复制文件时出现预期之外的错误：" + err.Error())
 			}
 
-			strs, err := data.Get()
-			if err != nil {
-				return
-			}
-
-			for _, str := range strs {
-				fmt.Println(str)
-				if str == closer.URI().Name() {
-					mylogger.Log("你添加了一个似乎已经添加过的mod名")
-					return
-				}
-			}
-
-			err = data.Append(closer.URI().Name())
-			if err != nil {
-				mylogger.Log("操作注入列表时出现预期之外的错误：" + err.Error())
-				return
-			}
+			appendIntoData(closer.URI().Name(), &data)
 
 		}, Window)
 		fileOpen.SetFilter(storage.NewExtensionFileFilter([]string{".jar"}))
@@ -137,19 +136,25 @@ func ModInjectPanel(_ fyne.Window) fyne.CanvasObject {
 			selectedLabel.SetText("No selection")
 		}
 	}
+
+	check := widget.NewCheckWithData("开启注入", EnabledInject)
+	check2 := widget.NewCheckWithData("删除非核心mod", 非核心mod删除)
 	EnabledInject.AddListener(binding.NewDataListener(func() {
 		enabled, err := EnabledInject.Get()
 		if err != nil {
 			mylogger.Log("获取mod注入是否开启时出现了不可预期的错误：" + err.Error())
 		}
 		if enabled {
+			if clientlauncher.EnabledCL {
+				dialog.ShowInformation("炒.西红柿.鸡蛋", "mod注入和开端只能开启一个，如果您执意要开启mod注入，请关闭开端后再开启", global.Window)
+				EnabledInject.Set(false)
+				return
+			}
 			modloader.OnEnableMod()
 			return
 		}
 		modloader.OnCloseMod()
 	}))
-	check := widget.NewCheckWithData("开启注入", EnabledInject)
-	check2 := widget.NewCheckWithData("删除非核心mod", 非核心mod删除)
 	return container.NewBorder(nil,
 		container.NewVBox(container.NewHBox(check, check2), container.NewVBox(add, Line), widget.NewSeparator(), container.NewVBox(del, Line)), nil, nil, list)
 }

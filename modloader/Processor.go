@@ -1,6 +1,8 @@
 package modloader
 
-import "ScrambledEggwithTomato/mylogger"
+import (
+	"ScrambledEggwithTomato/mylogger"
+)
 
 var (
 	EnablleMod = false
@@ -8,6 +10,7 @@ var (
 
 func OnEnableMod() {
 	if !EnablleMod {
+
 		EnablleMod = true
 		mylogger.Log("已开启mod注入...")
 	}
