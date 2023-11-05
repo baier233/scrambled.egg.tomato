@@ -1,8 +1,6 @@
 package panels
 
 import (
-	"ScrambledEggwithTomato/clientlauncher"
-	"ScrambledEggwithTomato/global"
 	"ScrambledEggwithTomato/modloader"
 	"ScrambledEggwithTomato/mylogger"
 	"ScrambledEggwithTomato/utils"
@@ -145,12 +143,7 @@ func ModInjectPanel(_ fyne.Window) fyne.CanvasObject {
 			mylogger.Log("获取mod注入是否开启时出现了不可预期的错误：" + err.Error())
 		}
 		if enabled {
-			if clientlauncher.EnabledCL {
-				dialog.ShowInformation("炒.西红柿.鸡蛋", "mod注入和开端只能开启一个，如果您执意要开启mod注入，请关闭开端后再开启", global.Window)
-				EnabledInject.Set(false)
-				return
-			}
-			modloader.OnEnableMod()
+			modloader.OnEnableMod(&EnabledInject)
 			return
 		}
 		modloader.OnCloseMod()

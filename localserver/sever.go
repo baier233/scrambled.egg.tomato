@@ -1,8 +1,7 @@
 package localserver
 
 import (
-	"ScrambledEggwithTomato/clientlauncher"
-	"ScrambledEggwithTomato/modloader"
+	"ScrambledEggwithTomato/global"
 	"ScrambledEggwithTomato/mylogger"
 	"ScrambledEggwithTomato/utils"
 	"encoding/json"
@@ -48,7 +47,7 @@ func process(conn *net.Conn) {
 		}
 
 		if string(bytesRead) == "GetData|CL" {
-			if clientlauncher.EnabledCL {
+			if global.EnabledCL {
 				err := utils.WriteN(*conn, []byte(GetData()), utils.PacketHerderLen_32)
 				if err != nil {
 					continue
@@ -59,7 +58,7 @@ func process(conn *net.Conn) {
 			utils.WriteN(*conn, []byte("Baier#1337"), utils.PacketHerderLen_32)
 		}
 		if string(bytesRead) == "GetData|Mod" {
-			if modloader.EnablleMod {
+			if global.EnabledMod {
 				err := utils.WriteN(*conn, []byte("E8 ?? ?? ?? ?? 90 48 8B 4D ?? FF 15 ?? ?? ?? ?? BA 01 00 00 00 48 8B 4D ?? E8 ?? ?? ?? ?? 90 48 8B 4D ?? FF 15 ?? ?? ?? ?? BA 01 00 00 00 48 8B 4D ?? E8 ?? ?? ?? ??"), utils.PacketHerderLen_32)
 				if err != nil {
 					continue

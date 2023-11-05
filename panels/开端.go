@@ -3,6 +3,7 @@ package panels
 import (
 	"ScrambledEggwithTomato/clientlauncher"
 	"ScrambledEggwithTomato/proxy"
+	"unsafe"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -10,9 +11,25 @@ import (
 )
 
 var CheckGroup = widget.NewCheckGroup([]string{"开启开端", "开启proxy"}, onSelect)
+var pCheckGroup unsafe.Pointer
 var selectEntryStr = []string{"BaierCL"}
 
-var EnabledProxy = false
+func ClientLaunchPanel(_ fyne.Window) fyne.CanvasObject {
+
+	selectEntry := widget.NewSelectEntry(selectEntryStr)
+	selectItem := widget.NewForm(widget.NewFormItem("模式", selectEntry))
+
+	selectEntry.SetText(selectEntryStr[0])
+
+	CheckGroup.Horizontal = true
+	pCheckGroup = unsafe.Pointer(&CheckGroup)
+	return container.NewBorder(selectItem, CheckGroup, nil, nil, nil)
+}
+func changeIt(strs []string) {
+
+	check := (**widget.CheckGroup)(pCheckGroup)
+	(*check).Selected = strs
+}
 
 func onSelect(s []string) {
 	switch len(s) {
@@ -24,7 +41,8 @@ func onSelect(s []string) {
 	case 1:
 		{
 			if s[0] == "开启开端" {
-				clientlauncher.OnEnableCL()
+				s = clientlauncher.OnEnableCL(s)
+				changeIt(s)
 				proxy.OnCloseProxy()
 			} else {
 				clientlauncher.OnCloseCL()
@@ -34,19 +52,10 @@ func onSelect(s []string) {
 		}
 	case 2:
 		{
-			clientlauncher.OnEnableCL()
+			s = clientlauncher.OnEnableCL(s)
+			changeIt(s)
 			proxy.OnEnableProxy()
 		}
 	}
 
-}
-func ClientLaunchPanel(_ fyne.Window) fyne.CanvasObject {
-
-	selectEntry := widget.NewSelectEntry(selectEntryStr)
-	selectItem := widget.NewForm(widget.NewFormItem("模式", selectEntry))
-
-	selectEntry.SetText(selectEntryStr[0])
-
-	CheckGroup.Horizontal = true
-	return container.NewBorder(selectItem, CheckGroup, nil, nil, nil)
 }
