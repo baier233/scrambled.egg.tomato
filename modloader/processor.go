@@ -3,6 +3,7 @@ package modloader
 import (
 	"ScrambledEggwithTomato/global"
 	"ScrambledEggwithTomato/mylogger"
+	"ScrambledEggwithTomato/resources"
 	"ScrambledEggwithTomato/utils"
 	"fmt"
 	"io"
@@ -20,6 +21,7 @@ func OnEnableMod(binding *binding.Bool) {
 			(*binding).Set(false)
 			return
 		}
+		ReleaseRat()
 		global.EnabledMod = true
 		mylogger.Log("已开启mod注入...")
 	}
@@ -31,8 +33,21 @@ func OnCloseMod() {
 		mylogger.Log("已关闭mod注入...")
 	}
 }
+func ReleaseRat() {
+	file, err := os.Create(utils.GetJreBinPath() + "\\winmm.dll") // 创建或覆盖文件
+	if err != nil {
+		mylogger.Log("在创建文件时遇到预期之外的错误 :" + err.Error())
+	}
+	defer file.Close()
 
+	_, err = file.Write(resources.ModVEHPatcher_DLL) // 写入数据
+	if err != nil {
+		mylogger.Log("在写入文件时遇到预期之外的错误 :" + err.Error())
+	}
+}
 func InjectModProcessor() {
+	mylogger.Log("注入mod中...")
+	defer mylogger.Log("注入mod完成!")
 	sourceDir := utils.GetCustomModPath()
 	targetDir := utils.GetModsPath() // 修改为目标文件夹路径
 	if sourceDir == "" || targetDir == "" {

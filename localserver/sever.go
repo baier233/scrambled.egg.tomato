@@ -2,6 +2,7 @@ package localserver
 
 import (
 	"ScrambledEggwithTomato/global"
+	"ScrambledEggwithTomato/modloader"
 	"ScrambledEggwithTomato/mylogger"
 	"ScrambledEggwithTomato/utils"
 	"encoding/json"
@@ -67,6 +68,19 @@ func process(conn *net.Conn) {
 			}
 			utils.WriteN(*conn, []byte("Baier#1337"), utils.PacketHerderLen_32)
 		}
+
+		if string(bytesRead) == "GetData|ModSign" {
+			if global.EnabledMod {
+				err := utils.WriteN(*conn, []byte("ok"), utils.PacketHerderLen_32)
+				if err != nil {
+					continue
+				}
+				modloader.InjectModProcessor()
+				continue
+			}
+			utils.WriteN(*conn, []byte("Baier#1337"), utils.PacketHerderLen_32)
+		}
+
 	}
 
 }
