@@ -4,13 +4,14 @@ import (
 	"ScrambledEggwithTomato/global"
 	"ScrambledEggwithTomato/mylogger"
 	"ScrambledEggwithTomato/proxy"
+
 	"fyne.io/fyne/v2/dialog"
 )
 
 func OnEnableCL(group []string) []string {
 	if !global.EnabledCL {
 		if global.EnabledMod {
-			dialog.ShowInformation("炒.西红柿.鸡蛋", "mod注入和开端只能开启一个，请关闭注入后再代开开端", global.Window)
+			dialog.ShowInformation("炒.西红柿.鸡蛋", "mod注入和开端只能开启一个，请关闭注入后再打开开端", global.Window)
 			for i, s := range group {
 				if s == "开启开端" {
 					group = append(group[:i], group[i+1:]...)
