@@ -1,13 +1,12 @@
-package panels
+package utils
 
 import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 )
 
-func copy(src, dst string) error {
+func Copy(src, dst string) error {
 	sourceFilesStat, err := os.Stat(src)
 	if err != nil {
 		return err
@@ -35,12 +34,4 @@ func copy(src, dst string) error {
 	_, err = io.Copy(destination, source)
 
 	return err
-}
-
-func getCustomModPath() string {
-	absPath, err := filepath.Abs(".")
-	if err != nil {
-		fmt.Println(err)
-	}
-	return absPath + "\\eggs"
 }
