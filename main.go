@@ -18,9 +18,10 @@ func preInit() {
 	panels.Panels = map[string]panels.Panel{
 		"注入": {"注入", panels.ModInjectPanel},
 		"开端": {"开端", panels.ClientLaunchPanel},
+		"设置": {"设置", panels.SettingsPanel},
 	}
 	panels.PanelIndex = map[string][]string{
-		"": {"注入", "开端"}}
+		"": {"注入", "开端", "设置"}}
 
 	return
 

@@ -4,7 +4,6 @@ import (
 	"ScrambledEggwithTomato/modloader"
 	"ScrambledEggwithTomato/mylogger"
 	"ScrambledEggwithTomato/utils"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,15 +18,8 @@ import (
 
 var tempLists []string
 var EnabledInject = binding.NewBool()
-var 非核心mod删除 = binding.NewBool()
+var EnabledRemoveSrvMods = binding.NewBool()
 
-func getCustomModPath() string {
-	absPath, err := filepath.Abs(".")
-	if err != nil {
-		fmt.Println(err)
-	}
-	return absPath + "\\eggs"
-}
 func appendIntoData(name string, data *binding.ExternalStringList) {
 	strs, err := (*data).Get()
 	if err != nil {
@@ -59,10 +51,10 @@ func ModInjectPanel(_ fyne.Window) fyne.CanvasObject {
 		func(i binding.DataItem, o fyne.CanvasObject) {
 			o.(*widget.Label).Bind(i.(binding.String))
 		})
-	path := getCustomModPath()
+	path := utils.GetCustomModPath()
 	_, err := os.Stat(path)
 	if err != nil && os.IsNotExist(err) {
-		err = os.Mkdir(getCustomModPath(), 0755)
+		err = os.Mkdir(utils.GetCustomModPath(), 0755)
 		if err != nil {
 			mylogger.Log("创建文件夹时出现预期之外的错误：" + err.Error())
 		}
@@ -87,7 +79,7 @@ func ModInjectPanel(_ fyne.Window) fyne.CanvasObject {
 			}
 			//fmt.Println(closer.URI().Path())
 
-			err = utils.Copy(closer.URI().Path(), path+"\\"+closer.URI().Name())
+			err = utils.CopyFile(closer.URI().Path(), path+"\\"+closer.URI().Name())
 			if err != nil {
 				mylogger.Log("复制文件时出现预期之外的错误：" + err.Error())
 			}
@@ -118,11 +110,21 @@ func ModInjectPanel(_ fyne.Window) fyne.CanvasObject {
 		if count == -1 {
 			return
 		}
+
+		err = os.Remove(utils.GetCustomModPath() + "\\" + selectedLabel.Text)
+		if err != nil {
+			mylogger.Log("在删除模组时发生超出预期的错误：" + err.Error())
+			return
+		}
 		lists = append(lists[:count], lists[count+1:]...)
 		err = data.Set(lists)
 		if err != nil {
 			return
 		}
+	})
+
+	open := widget.NewButton("打开文件夹", func() {
+		utils.OpenFolderInExplorer(utils.GetCustomModPath())
 	})
 
 	list.OnSelected = func(id widget.ListItemID) {
@@ -136,7 +138,7 @@ func ModInjectPanel(_ fyne.Window) fyne.CanvasObject {
 	}
 
 	check := widget.NewCheckWithData("开启注入", EnabledInject)
-	check2 := widget.NewCheckWithData("删除非核心mod", 非核心mod删除)
+
 	EnabledInject.AddListener(binding.NewDataListener(func() {
 		enabled, err := EnabledInject.Get()
 		if err != nil {
@@ -148,6 +150,20 @@ func ModInjectPanel(_ fyne.Window) fyne.CanvasObject {
 		}
 		modloader.OnCloseMod()
 	}))
+
+	check2 := widget.NewCheckWithData("删除非核心mod", EnabledRemoveSrvMods)
+	EnabledRemoveSrvMods.AddListener(binding.NewDataListener(func() {
+		enabled, err := EnabledRemoveSrvMods.Get()
+		if err != nil {
+			mylogger.Log("获取删除非核心mod是否开启时出现了不可预期的错误：" + err.Error())
+		}
+		if enabled {
+			modloader.OnEnableRemoveSrvMod()
+			return
+		}
+		modloader.OnDisableRemoveSrvMod()
+	}))
+
 	return container.NewBorder(nil,
-		container.NewVBox(container.NewHBox(check, check2), container.NewVBox(add, Line), widget.NewSeparator(), container.NewVBox(del, Line)), nil, nil, list)
+		container.NewVBox(container.NewHBox(check, check2), container.NewVBox(add, Line), widget.NewSeparator(), container.NewVBox(del, Line), widget.NewSeparator(), container.NewVBox(open, Line)), nil, nil, list)
 }

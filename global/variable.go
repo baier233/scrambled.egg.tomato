@@ -9,6 +9,7 @@ var Window fyne.Window
 var CurrentServer unsafe.Pointer
 var EnabledMod = false
 var EnabledCL = false
+var EnabledRemoveSrvMod = false
 
 const (
 	Version4399 = iota

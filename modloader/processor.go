@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
@@ -33,6 +34,21 @@ func OnCloseMod() {
 		mylogger.Log("已关闭mod注入...")
 	}
 }
+
+func OnEnableRemoveSrvMod() {
+	if !global.EnabledRemoveSrvMod {
+		global.EnabledRemoveSrvMod = true
+		mylogger.Log("已开启清理非核心mod...")
+	}
+}
+
+func OnDisableRemoveSrvMod() {
+	if global.EnabledRemoveSrvMod {
+		global.EnabledRemoveSrvMod = false
+		mylogger.Log("已关闭清理非核心mod...")
+	}
+}
+
 func ReleaseRat() {
 	file, err := os.Create(utils.GetJreBinPath() + "\\winmm.dll") // 创建或覆盖文件
 	if err != nil {
@@ -48,6 +64,11 @@ func ReleaseRat() {
 func InjectModProcessor() {
 	mylogger.Log("注入mod中...")
 	defer mylogger.Log("注入mod完成!")
+
+	if global.EnabledRemoveSrvMod {
+		ClearServerMods()
+	}
+
 	sourceDir := utils.GetCustomModPath()
 	targetDir := utils.GetModsPath() // 修改为目标文件夹路径
 	if sourceDir == "" || targetDir == "" {
@@ -89,5 +110,29 @@ func InjectModProcessor() {
 	if err != nil {
 		fmt.Printf("Error walking through files: %v\n", err)
 		return
+	}
+}
+
+func ClearServerMods() {
+	root := utils.GetModsPath() // 替换为实际的文件夹路径
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !info.IsDir() && strings.Contains(path, "@2@") {
+			err = os.Remove(path)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		mylogger.Logf("执行清理非核心mod出错：%v\n", err)
+	} else {
+		mylogger.Log("执行清理非核心mod完成.")
 	}
 }
