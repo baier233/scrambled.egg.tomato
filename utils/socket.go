@@ -16,11 +16,7 @@ const (
 )
 
 func WriteN(w io.Writer, buf []byte, whl PacketHerderLenType) error {
-	aes, err := EncryptAES(string(buf))
-	if err != nil {
-		return err
-	}
-	buf, err = PackN([]byte(aes), whl)
+	buf, err := PackN(EncryptServer(buf), whl)
 	if err != nil {
 		return err
 	}
@@ -84,8 +80,8 @@ func UnpackN(r io.Reader, pLen PacketHerderLenType) (buf []byte, err error) {
 	if err != nil {
 		return nil, err
 	}
-	a := DecryptServer(buf)
-	return []byte(a), err
+	a := DecryptAES(buf)
+	return a, err
 }
 
 func read(r io.Reader, length uint32) ([]byte, error) {

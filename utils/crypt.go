@@ -5,6 +5,8 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
+	"io"
 )
 
 var MySecret = []byte("WellItIsOkayIfYouSawThis")
@@ -41,6 +43,72 @@ func padText(text string, blockSize int) []byte {
 		paddingBytes[i] = byte(padding)
 	}
 	return append([]byte(text), paddingBytes...)
+}
+func unpadText(text []byte) ([]byte, error) {
+	if len(text) == 0 {
+		return nil, errors.New("Input text is empty")
+	}
+
+	padding := int(text[len(text)-1])
+
+	if padding >= len(text) {
+		return nil, errors.New("Invalid padding value")
+	}
+
+	if padding == 0 {
+		return nil, errors.New("Invalid padding value: 0")
+	}
+
+	if padding > len(text) {
+		return nil, errors.New("Padding value exceeds text length")
+	}
+
+	unpaddedText := text[:len(text)-padding]
+	return unpaddedText, nil
+}
+func EncryptServer(origData []byte) (encrypted []byte) {
+	key := []byte(MySecret)
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		panic(err)
+	}
+	encrypted = make([]byte, aes.BlockSize+len(origData))
+	iv := encrypted[:aes.BlockSize]
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		panic(err)
+	}
+	stream := cipher.NewCFBEncrypter(block, iv)
+	stream.XORKeyStream(encrypted[aes.BlockSize:], origData)
+	encHex := hex.EncodeToString(encrypted)
+	return []byte(encHex)
+}
+
+func DecryptAES(encrypted []byte) (decryptedRet []byte) {
+	encryptedBytes, err := hex.DecodeString(string(encrypted))
+	if err != nil {
+		return nil
+	}
+
+	block, err := aes.NewCipher(MySecret)
+	if err != nil {
+		return nil
+	}
+
+	if len(encryptedBytes) < aes.BlockSize {
+		return nil
+	}
+	iv := encryptedBytes[:aes.BlockSize]
+	encStr := encryptedBytes[aes.BlockSize:]
+
+	mode := cipher.NewCBCDecrypter(block, iv)
+	decrypted := make([]byte, len(encStr))
+	mode.CryptBlocks(decrypted, encStr)
+
+	decrypted, err = unpadText(decrypted)
+	if err != nil {
+		return nil
+	}
+	return decrypted
 }
 
 func DecryptServer(encrypted []byte) (decrypted []byte) {

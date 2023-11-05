@@ -38,7 +38,7 @@ func ClientLaunchProcessor() {
 		var serverData = NewServerData()
 		err := InjectDllIntoMinecraft(serverData)
 		if err == nil {
-			mylogger.Log("Cl加载成功...")
+			mylogger.Log("Cl加载成功[1]...")
 
 			if global.CurrentServer != nil {
 				server := (*proxy.MinecraftProxyServer)(global.CurrentServer)
