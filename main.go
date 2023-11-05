@@ -2,10 +2,12 @@ package main
 
 import (
 	"ScrambledEggwithTomato/data"
+	"ScrambledEggwithTomato/global"
 	"ScrambledEggwithTomato/localserver"
 	"ScrambledEggwithTomato/mylogger"
 	"ScrambledEggwithTomato/panels"
 	"ScrambledEggwithTomato/tm"
+	"ScrambledEggwithTomato/utils"
 	"fyne.io/fyne/v2/dialog"
 	"log"
 
@@ -49,12 +51,16 @@ func main() {
 	mylogger.Log("工具箱启动...")
 	go localserver.BeginListen()
 	defer mylogger.Log("工具箱关闭...")
-	dialog.ShowConfirm("检测到你同时安装了163和4399版本的网易盒子", "是否选择使用4399?", func(b bool) {
-		if b {
-			mylogger.Log("当前网易盒子版本4399")
-		}
-		mylogger.Log("当前网易盒子版本163")
-	}, panels.Window)
+	if len(utils.GetWPFVersion()) > 1 {
+		dialog.ShowConfirm("检测到你同时安装了163和4399版本的网易盒子", "是否选择使用4399?", func(b bool) {
+			if b {
+				mylogger.Log("当前网易盒子版本4399")
+				global.WPFVersion = global.Version4399
+				return
+			}
+			mylogger.Log("当前网易盒子版本163")
+			global.WPFVersion = global.Version163
+		}, panels.Window)
+	}
 	panels.Window.ShowAndRun()
-
 }

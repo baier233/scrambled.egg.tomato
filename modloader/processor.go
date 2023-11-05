@@ -3,6 +3,7 @@ package modloader
 import (
 	"ScrambledEggwithTomato/global"
 	"ScrambledEggwithTomato/mylogger"
+	"ScrambledEggwithTomato/utils"
 	"fmt"
 	"io"
 	"os"
@@ -32,8 +33,11 @@ func OnCloseMod() {
 }
 
 func InjectModProcessor() {
-	sourceDir := getCustomModPath()
-	targetDir := getModsPath() // 修改为目标文件夹路径
+	sourceDir := utils.GetCustomModPath()
+	targetDir := utils.GetModsPath() // 修改为目标文件夹路径
+	if sourceDir == "" || targetDir == "" {
+		return
+	}
 	err := filepath.Walk(sourceDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
