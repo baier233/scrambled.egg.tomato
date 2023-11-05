@@ -6,6 +6,7 @@ import (
 	"ScrambledEggwithTomato/mylogger"
 	"ScrambledEggwithTomato/panels"
 	"ScrambledEggwithTomato/tm"
+	"fyne.io/fyne/v2/dialog"
 	"log"
 
 	"github.com/fatih/color"
@@ -48,6 +49,12 @@ func main() {
 	mylogger.Log("工具箱启动...")
 	go localserver.BeginListen()
 	defer mylogger.Log("工具箱关闭...")
+	dialog.ShowConfirm("检测到你同时安装了163和4399版本的网易盒子", "是否选择使用4399?", func(b bool) {
+		if b {
+			mylogger.Log("当前网易盒子版本4399")
+		}
+		mylogger.Log("当前网易盒子版本163")
+	}, panels.Window)
 	panels.Window.ShowAndRun()
 
 }
