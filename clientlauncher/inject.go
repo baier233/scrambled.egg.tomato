@@ -101,7 +101,7 @@ func InjectDllIntoMinecraft(serverData *ServerData) error {
 
 	result := C.inject(C.int(targetPid), (*C.char)(unsafe.Pointer(&resources.BaierClientLauncher_DLL[0])))
 	if int(result) == 0 {
-		return global.ErrortInjectFaield
+		return global.ErrorInjectFailed
 	}
 	pidContainer.Add(strconv.Itoa(int(targetPid)))
 	return nil

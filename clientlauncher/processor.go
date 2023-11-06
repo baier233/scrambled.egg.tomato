@@ -4,6 +4,7 @@ import (
 	"ScrambledEggwithTomato/global"
 	"ScrambledEggwithTomato/mylogger"
 	"ScrambledEggwithTomato/proxy"
+	"errors"
 
 	"fyne.io/fyne/v2/dialog"
 )
@@ -71,7 +72,7 @@ func ClientLaunchProcessor() {
 
 			}
 
-		} else if err != global.ErrorNonExistentMinecraftProcess {
+		} else if !errors.Is(global.ErrorNonExistentMinecraftProcess, err) {
 			mylogger.Log("出现了不可预期的错误:" + err.Error())
 		}
 	}

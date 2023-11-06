@@ -3,7 +3,7 @@ package global
 import "errors"
 
 var (
-	ErrortInjectFaield                       = errors.New("ErrortInjectFaield")
+	ErrorInjectFailed                        = errors.New("ErrorInjectFailed")
 	ErrorNonExistentMinecraftProcess         = errors.New("ErrorNonExistentMinecraftProcess")
 	ErrorCreatCreateToolhelp32SnapshotFailed = errors.New("ErrorCreatCreateToolhelp32SnapshotFailed")
 	ErrorEmptyInputData                      = errors.New("ErrorEmptyInputData")
