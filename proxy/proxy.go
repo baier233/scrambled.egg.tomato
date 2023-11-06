@@ -35,12 +35,24 @@ func EstablishServer(data []string) error {
 				return err
 			} else {
 
-				conn.Write([]byte(serverId + "\u0000"))
+				_, err := conn.Write([]byte(serverId + "\u0000"))
+				if err != nil {
+					mylogger.Log("发送数据到CL服务器时发生 预期之外的错误　: " + err.Error())
+					return err
+				}
 
-				defer conn.Close()
+				defer func(conn net.Conn) {
+					err := conn.Close()
+					if err != nil {
+						mylogger.Log("关闭CL连接时发生 预期之外的错误　: " + err.Error())
+					}
+				}(conn)
 
 				bytes := make([]byte, 1024)
-				conn.Read(bytes)
+				_, err = conn.Read(bytes)
+				if err != nil {
+					return err
+				}
 			}
 			return nil
 
@@ -68,8 +80,14 @@ func handleLocalPing(description string, port string) {
 		if err != nil {
 			time.Sleep(1)
 		} else {
-			connudp.Write([]byte("[MOTD]" + strings.Replace(strings.Replace(description, "\n", " ", -1), "目标", "", -1) + "[/MOTD][AD]" + port + "[/AD]"))
-			connudp.Close()
+			_, err := connudp.Write([]byte("[MOTD]" + strings.Replace(strings.Replace(description, "\n", " ", -1), "目标", "", -1) + "[/MOTD][AD]" + port + "[/AD]"))
+			if err != nil {
+				continue
+			}
+			err = connudp.Close()
+			if err != nil {
+				continue
+			}
 		}
 	}
 
