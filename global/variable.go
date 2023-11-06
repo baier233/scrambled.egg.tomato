@@ -1,8 +1,9 @@
 package global
 
 import (
-	"fyne.io/fyne/v2"
 	"unsafe"
+
+	"fyne.io/fyne/v2"
 )
 
 var Window fyne.Window
@@ -12,9 +13,10 @@ var EnabledCL = false
 var EnabledRemoveSrvMod = false
 
 const (
-	Version4399 = iota
+	VersionNULL = iota
+	Version4399
 	Version163
 	VersionMeatHook
 )
 
-var WPFVersion = Version163
+var WPFVersion = VersionNULL

@@ -3,14 +3,17 @@ package proxy
 import (
 	"ScrambledEggwithTomato/global"
 	"ScrambledEggwithTomato/mylogger"
-	mcnet "github.com/Tnze/go-mc/net"
-	"github.com/Tnze/go-mc/net/packet"
+	"context"
+	"errors"
+	"fmt"
 	"net"
 	"strings"
 	"time"
 	"unsafe"
-)
 
+	mcnet "github.com/Tnze/go-mc/net"
+	"github.com/Tnze/go-mc/net/packet"
+)
 func EstablishServer(data []string) error {
 	if len(data) != 4 {
 		return global.ErrorInternalIncorrectData
@@ -29,28 +32,41 @@ func EstablishServer(data []string) error {
 		MOTD:   "§西红柿炒鸡蛋§w-§6§l代理服务\n§w目标服务器：" + serverIp + "  角色：" + roleName,
 		HandleEncryption: func(serverId string) error {
 
-			conn, err := net.Dial("tcp", "127.0.0.1:55996")
-			if err != nil {
-				mylogger.Log("无法连接到CL服务器 预期之外的错误　: " + err.Error())
-				return err
-			} else {
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			isTimeout := func() bool {
+				select {
+				default:
+					return false
+				case <-ctx.Done():
+					return errors.Is(ctx.Err(), context.DeadlineExceeded)
+				}
+			}
 
-				_, err := conn.Write([]byte(serverId + "\u0000"))
-				if err != nil {
-					mylogger.Log("发送数据到CL服务器时发生 预期之外的错误　: " + err.Error())
+			defer cancel()
+
+			conn, err := (&net.Dialer{}).DialContext(ctx, "tcp", "127.0.0.1:55996")
+
+			if err != nil {
+				if isTimeout() {
+					mylogger.Log("无法连接到CL服务器，请在验证失败窗口出现后再进行连接")
 					return err
 				}
-
-				defer func(conn net.Conn) {
-					err := conn.Close()
-					if err != nil {
-						mylogger.Log("关闭CL连接时发生 预期之外的错误　: " + err.Error())
-					}
-				}(conn)
+				mylogger.Log("无法连接到CL服务器，请在验证失败窗口出现后再进行连接: " + err.Error())
+				return err
+			} else {
+				conn.SetWriteDeadline(time.Now().Add(time.Second * 3))
+				_, err := conn.Write([]byte(serverId + "\u0000"))
+				if err != nil {
+					mylogger.Log("CL服务器疑似已断开链接，出现意料之外的错误:" + err.Error())
+					return err
+				}
+				defer conn.Close()
 
 				bytes := make([]byte, 1024)
+
 				_, err = conn.Read(bytes)
 				if err != nil {
+					mylogger.Log("CL服务器疑似已断开链接，出现意料之外的错误:" + err.Error())
 					return err
 				}
 			}

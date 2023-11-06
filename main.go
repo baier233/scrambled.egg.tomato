@@ -8,8 +8,10 @@ import (
 	"ScrambledEggwithTomato/panels"
 	"ScrambledEggwithTomato/tm"
 	"ScrambledEggwithTomato/utils"
-	"fyne.io/fyne/v2/dialog"
+	"fmt"
 	"log"
+
+	"fyne.io/fyne/v2/dialog"
 
 	"github.com/fatih/color"
 )
@@ -37,7 +39,6 @@ func preInit() {
 
 // go build -a -ldflags "-s -w"
 func main() {
-
 	// err := clientlauncher.InjectDllIntoMinecraft()
 	// if err != nil {
 	// 	fmt.Println(err.Error())
@@ -52,16 +53,35 @@ func main() {
 	mylogger.Log("工具箱启动...")
 	go localserver.BeginListen()
 	defer mylogger.Log("工具箱关闭...")
-	if len(utils.GetWPFVersion()) > 1 {
-		dialog.ShowConfirm("检测到你同时安装了163和4399版本的网易盒子", "是否选择使用4399?", func(b bool) {
-			if b {
-				mylogger.Log("当前网易盒子版本4399")
-				global.WPFVersion = global.Version4399
+
+	wpfs := utils.GetWPFVersion()
+	switch len(wpfs) {
+	case 2:
+		{
+			dialog.ShowConfirm("检测到你同时安装了163和4399版本的网易盒子", "是否选择使用4399?", func(b bool) {
+				if b {
+					mylogger.Log("当前网易盒子版本4399")
+					global.WPFVersion = global.Version4399
+					return
+				}
+				mylogger.Log("当前网易盒子版本163")
+				global.WPFVersion = global.Version163
+			}, panels.Window)
+			break
+		}
+	case 1:
+		{
+			if wpfs[0] == "163" {
+				global.WPFVersion = global.Version163
 				return
 			}
-			mylogger.Log("当前网易盒子版本163")
-			global.WPFVersion = global.Version163
-		}, panels.Window)
+			global.WPFVersion = global.Version4399
+			break
+		}
+	default:
+		{
+			mylogger.Log("你可能没安装网易盒子 " + fmt.Sprint(wpfs))
+		}
 	}
 	panels.Window.ShowAndRun()
 }

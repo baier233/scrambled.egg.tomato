@@ -4,8 +4,10 @@ import (
 	"ScrambledEggwithTomato/global"
 	"ScrambledEggwithTomato/mylogger"
 	"fmt"
-	"golang.org/x/sys/windows/registry"
 	"path/filepath"
+	"syscall"
+
+	"golang.org/x/sys/windows/registry"
 )
 
 func GetWPFVersion() []string {
@@ -15,6 +17,9 @@ func GetWPFVersion() []string {
 	reg163 := `Software\Netease\MCLauncher`
 	key, err := registry.OpenKey(registry.CURRENT_USER, reg4399, registry.QUERY_VALUE)
 	if err != nil {
+		if err == syscall.ERROR_FILE_NOT_FOUND {
+			goto L163
+		}
 		if registry.ErrNotExist.Is(err) {
 			goto L163
 		}
@@ -24,9 +29,14 @@ func GetWPFVersion() []string {
 
 	value, _, err = key.GetStringValue("DownloadPath") // 空字符串表示默认值
 	if err != nil {
+		if err == syscall.ERROR_FILE_NOT_FOUND {
+			goto L163
+		}
 		if registry.ErrNotExist.Is(err) {
 			goto L163
 		}
+
+		mylogger.Log(err.Error())
 	}
 	if len(value) > 10 {
 		data = append(data, "4399")
@@ -34,6 +44,9 @@ func GetWPFVersion() []string {
 L163:
 	key, err = registry.OpenKey(registry.CURRENT_USER, reg163, registry.QUERY_VALUE)
 	if err != nil {
+		if err == syscall.ERROR_FILE_NOT_FOUND {
+			return data
+		}
 		if registry.ErrNotExist.Is(err) {
 			return data
 		}
@@ -43,6 +56,9 @@ L163:
 
 	value, _, err = key.GetStringValue("DownloadPath") // 空字符串表示默认值
 	if err != nil {
+		if err == syscall.ERROR_FILE_NOT_FOUND {
+			return data
+		}
 		if registry.ErrNotExist.Is(err) {
 			return data
 		}

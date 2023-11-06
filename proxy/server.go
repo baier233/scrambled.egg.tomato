@@ -187,7 +187,6 @@ func (s *MinecraftProxyServer) forwardConnection(conn *mcnet.Conn, handshake Pac
 	if s.HandleEncryption != nil {
 		err = s.handleEncryption(conn, remoteConn)
 		if err != nil {
-			println(err.Error())
 			return err
 		}
 	}
