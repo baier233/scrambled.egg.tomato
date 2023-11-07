@@ -6,15 +6,12 @@ import (
 	"ScrambledEggwithTomato/resources"
 	"ScrambledEggwithTomato/utils"
 	"fmt"
-	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
 	"time"
 	"unsafe"
-
-	"golang.org/x/sys/windows"
 )
 
 //#include "inject.h"
@@ -23,6 +20,34 @@ import (
 import "C"
 
 var pidContainer = utils.NewStringContainer()
+
+func pushData(cmdline string, serverData *ServerData) {
+	var serverValue, portValue, usernameValue string
+	serverPattern := "--server\\s+([^\\s]+)"
+	serverRegexp := regexp.MustCompile(serverPattern)
+	serverMatches := serverRegexp.FindStringSubmatch(cmdline)
+	if len(serverMatches) > 1 {
+		serverValue = serverMatches[1]
+	}
+
+	portPattern := "--port\\s+([^\\s]+)"
+	portRegexp := regexp.MustCompile(portPattern)
+	portMatches := portRegexp.FindStringSubmatch(cmdline)
+	if len(portMatches) > 1 {
+		portValue = portMatches[1]
+	}
+
+	usernamePattern := "--username\\s+([^\\s]+)"
+	usernameRegexp := regexp.MustCompile(usernamePattern)
+	usernameMatches := usernameRegexp.FindStringSubmatch(cmdline)
+	if len(usernameMatches) > 1 {
+		usernameValue = usernameMatches[1]
+	}
+
+	serverData.ServerIP = serverValue
+	serverData.ServerPort = portValue
+	serverData.Username = usernameValue
+}
 
 func InjectDllIntoMinecraft(serverData *ServerData) error {
 
@@ -42,17 +67,11 @@ func InjectDllIntoMinecraft(serverData *ServerData) error {
 		for syscall.Process32Next(snapshot, &processEntry) == nil {
 			exeName := syscall.UTF16ToString(processEntry.ExeFile[:])
 
-			// if strings.Compare(exeName, "notepad.exe") == 0 {
-
-			// 	fmt.Printf("Process Name: %s, PID: %d\n", exeName, processEntry.ProcessID)
-			// 	targetPid = processEntry.ProcessID
-			// 	break
-			// }
 			if strings.Compare(exeName, "javaw.exe") != 0 {
 				continue
 			}
 
-			cmdline, err := GetCmdline(processEntry.ProcessID)
+			cmdline, err := utils.GetCmdline(processEntry.ProcessID)
 			if err == nil {
 
 				if strings.Contains(strings.ToUpper(cmdline), strings.ToUpper("-DlauncherControlPort")) {
@@ -60,33 +79,9 @@ func InjectDllIntoMinecraft(serverData *ServerData) error {
 						//mylogger.Log("检测到一个已经处理过的java进程 : " + strconv.Itoa(int(processEntry.ProcessID)))
 						continue
 					}
-					var serverValue, portValue, usernameValue string
 					str := fmt.Sprintf("Process Name: %s, PID: %d ", exeName, processEntry.ProcessID)
 					mylogger.Log("已找到Minecraft，" + str + " 准备执行注入操作...")
-					serverPattern := "--server\\s+([^\\s]+)"
-					serverRegexp := regexp.MustCompile(serverPattern)
-					serverMatches := serverRegexp.FindStringSubmatch(cmdline)
-					if len(serverMatches) > 1 {
-						serverValue = serverMatches[1]
-					}
-
-					portPattern := "--port\\s+([^\\s]+)"
-					portRegexp := regexp.MustCompile(portPattern)
-					portMatches := portRegexp.FindStringSubmatch(cmdline)
-					if len(portMatches) > 1 {
-						portValue = portMatches[1]
-					}
-
-					usernamePattern := "--username\\s+([^\\s]+)"
-					usernameRegexp := regexp.MustCompile(usernamePattern)
-					usernameMatches := usernameRegexp.FindStringSubmatch(cmdline)
-					if len(usernameMatches) > 1 {
-						usernameValue = usernameMatches[1]
-					}
-
-					serverData.ServerIP = serverValue
-					serverData.ServerPort = portValue
-					serverData.Username = usernameValue
+					pushData(cmdline, serverData)
 					targetPid = processEntry.ProcessID
 					break
 				}
@@ -159,63 +154,4 @@ func InjectDllIntoMinecraft(serverData *ServerData) error {
 	// 	defer syscall.CloseHandle(syscall.Handle(tHandle))
 
 	// 	return err
-}
-
-func GetCmdline(pid uint32) (string, error) {
-	/* 翻译这个C++代码: https://stackoverflow.com/a/42341811/11844632 */
-	if pid == 0 { // 系统进程,无法读取
-		return "", nil
-	}
-	h, err := windows.OpenProcess(windows.PROCESS_QUERY_INFORMATION|windows.PROCESS_VM_READ, false, pid)
-	if err != nil {
-		if e, ok := err.(windows.Errno); ok && e == windows.ERROR_ACCESS_DENIED {
-			return "", nil // 没权限,忽略这个进程
-		}
-		return "", err
-	}
-	defer windows.CloseHandle(h)
-
-	var pbi struct {
-		ExitStatus                   uint32
-		PebBaseAddress               uintptr
-		AffinityMask                 uintptr
-		BasePriority                 int32
-		UniqueProcessId              uintptr
-		InheritedFromUniqueProcessId uintptr
-	}
-	pbiLen := uint32(unsafe.Sizeof(pbi))
-	err = windows.NtQueryInformationProcess(h, windows.ProcessBasicInformation, unsafe.Pointer(&pbi), pbiLen, &pbiLen)
-	if err != nil {
-		return "", err
-	}
-
-	var addr uint64
-	d := *(*[]byte)(unsafe.Pointer(&reflect.SliceHeader{
-		Data: uintptr(unsafe.Pointer(&addr)),
-		Len:  8, Cap: 8}))
-	err = windows.ReadProcessMemory(h, pbi.PebBaseAddress+0x20, // ntddk.h,ProcessParameters偏移32字节
-		&d[0], uintptr(len(d)), nil)
-	if err != nil {
-		return "", err
-	}
-
-	var commandLine windows.NTUnicodeString
-	Len := unsafe.Sizeof(commandLine)
-	d = *(*[]byte)(unsafe.Pointer(&reflect.SliceHeader{
-		Data: uintptr(unsafe.Pointer(&commandLine)),
-		Len:  int(Len), Cap: int(Len)}))
-	err = windows.ReadProcessMemory(h, uintptr(addr+0x70), // winternl.h,分析文件偏移
-		&d[0], Len, nil)
-	if err != nil {
-		return "", err
-	}
-
-	cmdData := make([]uint16, commandLine.Length/2)
-	d = *(*[]byte)(unsafe.Pointer(&cmdData))
-	err = windows.ReadProcessMemory(h, uintptr(unsafe.Pointer(commandLine.Buffer)),
-		&d[0], uintptr(commandLine.Length), nil)
-	if err != nil {
-		return "", err
-	}
-	return windows.UTF16ToString(cmdData), nil
 }

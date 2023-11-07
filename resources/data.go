@@ -2,6 +2,8 @@ package resources
 
 import (
 	_ "embed"
+
+	"fyne.io/fyne/v2"
 )
 
 //go:embed HarmonyOS_Sans_SC_Light.ttf
@@ -18,3 +20,11 @@ var BaierClientLauncher_DLL []byte
 
 //go:embed winmm.vmp.dll
 var ModVEHPatcher_DLL []byte
+
+//go:embed icon2.png
+var icon []byte
+
+var IconResource = &fyne.StaticResource{
+	StaticName:    "icon.png",
+	StaticContent: icon,
+}

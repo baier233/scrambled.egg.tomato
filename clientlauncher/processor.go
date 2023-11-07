@@ -73,7 +73,7 @@ func ClientLaunchProcessor() {
 			}
 
 		} else if !errors.Is(global.ErrorNonExistentMinecraftProcess, err) {
-			mylogger.Log("出现了不可预期的错误:" + err.Error())
+			mylogger.LogErr("注入CL", err)
 		}
 	}
 }

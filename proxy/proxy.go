@@ -14,6 +14,7 @@ import (
 	mcnet "github.com/Tnze/go-mc/net"
 	"github.com/Tnze/go-mc/net/packet"
 )
+
 func EstablishServer(data []string) error {
 	if len(data) != 4 {
 		return global.ErrorInternalIncorrectData
@@ -32,12 +33,13 @@ func EstablishServer(data []string) error {
 		MOTD:   "§西红柿炒鸡蛋§w-§6§l代理服务\n§w目标服务器：" + serverIp + "  角色：" + roleName,
 		HandleEncryption: func(serverId string) error {
 
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			isTimeout := func() bool {
 				select {
 				default:
 					return false
 				case <-ctx.Done():
+					fmt.Println(ctx.Err())
 					return errors.Is(ctx.Err(), context.DeadlineExceeded)
 				}
 			}
@@ -48,16 +50,15 @@ func EstablishServer(data []string) error {
 
 			if err != nil {
 				if isTimeout() {
-					mylogger.Log("无法连接到CL服务器，请在验证失败窗口出现后再进行连接")
-					return err
+					mylogger.Log("timeout")
 				}
-				mylogger.Log("无法连接到CL服务器，请在验证失败窗口出现后再进行连接: " + err.Error())
+				mylogger.Log("无法连接到CL服务器 预期之外的错误　: " + err.Error())
 				return err
 			} else {
 				conn.SetWriteDeadline(time.Now().Add(time.Second * 3))
 				_, err := conn.Write([]byte(serverId + "\u0000"))
 				if err != nil {
-					mylogger.Log("CL服务器疑似已断开链接，出现意料之外的错误:" + err.Error())
+					mylogger.Log("CL服务器疑似已断开链接 预期之外的错误 :" + err.Error())
 					return err
 				}
 				defer conn.Close()
@@ -66,7 +67,7 @@ func EstablishServer(data []string) error {
 
 				_, err = conn.Read(bytes)
 				if err != nil {
-					mylogger.Log("CL服务器疑似已断开链接，出现意料之外的错误:" + err.Error())
+					mylogger.Log("CL服务器疑似已断开链接 预期之外的错误:" + err.Error())
 					return err
 				}
 			}
@@ -96,14 +97,8 @@ func handleLocalPing(description string, port string) {
 		if err != nil {
 			time.Sleep(1)
 		} else {
-			_, err := connudp.Write([]byte("[MOTD]" + strings.Replace(strings.Replace(description, "\n", " ", -1), "目标", "", -1) + "[/MOTD][AD]" + port + "[/AD]"))
-			if err != nil {
-				continue
-			}
-			err = connudp.Close()
-			if err != nil {
-				continue
-			}
+			connudp.Write([]byte("[MOTD]" + strings.Replace(strings.Replace(description, "\n", " ", -1), "目标", "", -1) + "[/MOTD][AD]" + port + "[/AD]"))
+			connudp.Close()
 		}
 	}
 

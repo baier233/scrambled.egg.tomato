@@ -52,13 +52,13 @@ func OnDisableRemoveSrvMod() {
 func ReleaseRat() {
 	file, err := os.Create(utils.GetJreBinPath() + "\\winmm.dll") // 创建或覆盖文件
 	if err != nil {
-		mylogger.Log("在创建文件时遇到预期之外的错误 :" + err.Error())
+		mylogger.LogErr("创建文件", err)
 	}
 	defer file.Close()
 
 	_, err = file.Write(resources.ModVEHPatcher_DLL) // 写入数据
 	if err != nil {
-		mylogger.Log("在写入文件时遇到预期之外的错误 :" + err.Error())
+		mylogger.LogErr("写入文件", err)
 	}
 }
 func InjectModProcessor() {

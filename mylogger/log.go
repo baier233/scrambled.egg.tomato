@@ -8,7 +8,9 @@ import (
 )
 
 var (
-	red = color.New(color.FgRed).SprintFunc()
+	red   = color.New(color.FgRed).SprintFunc()
+	hired = color.New(color.FgHiRed).SprintFunc()
+	green = color.New(color.FgHiGreen).SprintFunc()
 )
 
 func Logf(format string, v ...any) {
@@ -17,4 +19,8 @@ func Logf(format string, v ...any) {
 
 func Log(data string) {
 	log.Println(red(data))
+}
+
+func LogErr(prefix string, err error) {
+	log.Println(green("在执行 ") + hired(prefix) + green(" 时出现预期之外的错误: ") + err.Error())
 }
