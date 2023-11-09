@@ -4,9 +4,10 @@ import (
 	"ScrambledEggwithTomato/global"
 	"ScrambledEggwithTomato/mylogger"
 	"ScrambledEggwithTomato/proxy"
+	"ScrambledEggwithTomato/utils"
 	"errors"
-
 	"fyne.io/fyne/v2/dialog"
+	"os"
 )
 
 func OnEnableCL(group []string) []string {
@@ -20,6 +21,7 @@ func OnEnableCL(group []string) []string {
 			}
 			return group
 		}
+
 		global.EnabledCL = true
 		mylogger.Log("已开启CL...")
 		go ClientLaunchProcessor()
@@ -33,6 +35,17 @@ func OnCloseCL() {
 var lock = false
 
 func ClientLaunchProcessor() {
+	if _, err := os.Stat(utils.GetJreBinPath() + "\\winmnm.dll"); err != nil {
+		if !os.IsNotExist(err) {
+			err := os.Remove(utils.GetJreBinPath() + "\\winmnm.dll")
+			if err != nil {
+				mylogger.LogErr("开端-删除注入文件", err)
+			}
+		} else {
+			mylogger.LogErr("开端-查询注入文件", err)
+		}
+	}
+
 	defer mylogger.Log("CL协程守护结束...")
 	if lock {
 		return

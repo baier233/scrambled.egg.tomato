@@ -17,7 +17,7 @@ func Logf(format string, v ...any) {
 	log.Printf(red(fmt.Sprintf(format, v)))
 }
 
-func Log(data string) {
+func Log(data ...any) {
 	log.Println(red(data))
 }
 

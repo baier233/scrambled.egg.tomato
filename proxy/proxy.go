@@ -16,6 +16,12 @@ import (
 )
 
 func EstablishServer(data []string) error {
+	defer func() {
+		if r := recover(); r != nil {
+			mylogger.Log("Recovered in EstablishServer", r)
+		}
+	}()
+
 	if len(data) != 4 {
 		return global.ErrorInternalIncorrectData
 	}
@@ -32,6 +38,11 @@ func EstablishServer(data []string) error {
 		Remote: serverIp + ":" + serverPort,
 		MOTD:   "§西红柿炒鸡蛋§w-§6§l代理服务\n§w目标服务器：" + serverIp + "  角色：" + roleName,
 		HandleEncryption: func(serverId string) error {
+			defer func() {
+				if r := recover(); r != nil {
+					mylogger.Log("Recovered in HandleEncryption", r)
+				}
+			}()
 
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			isTimeout := func() bool {
@@ -91,6 +102,11 @@ func EstablishServer(data []string) error {
 
 }
 func handleLocalPing(description string, port string) {
+	defer func() {
+		if r := recover(); r != nil {
+			mylogger.Log("Recovered in handleLocalPing", r)
+		}
+	}()
 	for EnabledProxy {
 		time.Sleep(1000)
 		connudp, err := net.Dial("udp", "224.0.2.60:4445")

@@ -8,11 +8,11 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"os"
 )
 
 func SettingsPanel(_ fyne.Window) fyne.CanvasObject {
 	fix := widget.NewButton("修复", func() {
+
 		err := os.Remove(utils.GetJreBinPath() + "\\winmm.dll")
 
 		if err != nil {
