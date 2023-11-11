@@ -1,6 +1,7 @@
 package panels
 
 import (
+	"ScrambledEggwithTomato/global"
 	"ScrambledEggwithTomato/localserver"
 	"ScrambledEggwithTomato/login"
 	"ScrambledEggwithTomato/mylogger"
@@ -68,13 +69,19 @@ func LoginScreen(_ fyne.Window) fyne.CanvasObject {
 			}
 
 			if login.MyCurrentUser.IsLoginIn {
-				go localserver.BeginListen()
-				CheckWPFAndInitPanels()
-				Init()
+				if login.MyCurrentUser.User.RetData[1] == global.ScrambledEggTomatoVersion {
+					go localserver.BeginListen()
+					CheckWPFAndInitPanels()
+					Init()
+
+					if login.MyCurrentUser.Init && login.MyCurrentUser.User.Mark {
+						mylogger.Log("已经登录 用户名:", login.MyCurrentUser.User.RetData[0])
+					}
+				} else {
+					mylogger.Log("当前版本 :" + global.ScrambledEggTomatoVersion + " 不符合最新版本 :" + login.MyCurrentUser.User.RetData[1])
+				}
 			}
-			if login.MyCurrentUser.Init && login.MyCurrentUser.User.Mark {
-				mylogger.Log("已经登录 用户名:", login.MyCurrentUser.User.RetData[0])
-			}
+
 			button.SetText("登录!")
 		}()
 

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fyne.io/fyne/v2/dialog"
 	"os"
+	"runtime/debug"
 )
 
 func OnEnableCL(group []string) []string {
@@ -61,7 +62,7 @@ func ClientLaunchProcessor() {
 				server := (*proxy.MinecraftProxyServer)(global.CurrentServer)
 				server.CloseServer()
 				global.CurrentServer = nil
-
+				debug.FreeOSMemory()
 				mylogger.Log("已强制结束proxyserver")
 			}
 

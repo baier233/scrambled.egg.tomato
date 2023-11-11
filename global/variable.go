@@ -22,3 +22,5 @@ const (
 var WPFVersion = VersionNULL
 
 var CurrentUserInfo *UserInfo
+
+const ScrambledEggTomatoVersion = "1.0.1"

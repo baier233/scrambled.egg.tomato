@@ -20,5 +20,6 @@ type UserInfo struct {
 	HWID     string  `json:"HWID"`
 	TIME     string  `json:"Time"`
 	RANK     int     `json:"Rank"`
+	VERSION  string  `json:"Version"`
 	DATA     RetData `json:"Data"`
 }

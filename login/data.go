@@ -10,7 +10,7 @@ var (
 	ErrorIllegalReturnData           = errors.New("不合法的返回数据")
 	ErrorIncorrectActivationCode     = errors.New("不正确 & 超时 的激活码")
 
-	ErrorUserRegistered = errors.New("整个用户名被注册了")
+	ErrorUserRegistered = errors.New("这个用户名被注册了")
 )
 
 const (

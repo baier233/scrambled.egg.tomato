@@ -21,3 +21,8 @@ go.work
 
 eggs.*
 *.jar
+*.vmp
+*.dd64
+*.bak
+*.vmp
+ScrambledEggwithTomato.exe.vmp

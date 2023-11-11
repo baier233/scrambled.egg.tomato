@@ -74,6 +74,7 @@ func (user *User) _processLogin() error {
 	global.CurrentUserInfo = &userinfo
 	user.Mark = true
 	user.RetData[0] = userinfo.USERNAME
+	user.RetData[1] = userinfo.VERSION
 
 	conn.Close()
 	VMProtect.End()
@@ -115,7 +116,6 @@ func (user *User) _processRegister() error {
 		}
 
 		if string(bytesRead) == "VerifyCode:-3" {
-
 			return ErrorIncorrectActivationCode
 		}
 		return ErrorInternalImpossibleInputData
