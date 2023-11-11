@@ -1,9 +1,10 @@
 package panels
 
 import (
+	"ScrambledEggwithTomato/localserver"
 	"ScrambledEggwithTomato/login"
+	"ScrambledEggwithTomato/mylogger"
 	"ScrambledEggwithTomato/utils"
-	"fmt"
 	"fyne.io/fyne/v2/dialog"
 	"strings"
 
@@ -35,7 +36,7 @@ func handleLogin(username, password string) error {
 	}
 
 	if user.Mark {
-		currentUser = NewCurrentUser(user)
+		login.MyCurrentUser = NewCurrentUser(user)
 		return nil
 	}
 
@@ -46,34 +47,35 @@ func handleLogin(username, password string) error {
 func LoginScreen(_ fyne.Window) fyne.CanvasObject {
 	usernameInput := widget.NewEntry()
 	passwordInput := widget.NewPasswordEntry()
-	form := widget.NewForm(widget.NewFormItem("Username", usernameInput), widget.NewFormItem("Password", passwordInput))
+	form := widget.NewForm(widget.NewFormItem("用户名", usernameInput), widget.NewFormItem("密码", passwordInput))
 
 	Line.StrokeWidth = 5
 
-	button = widget.NewButton("Login!", func() {
-		if button.Text != "Login!" {
+	button = widget.NewButton("登录!", func() {
+		if button.Text != "登录!" {
 			return
 		}
 
-		button.SetText("Logging in...")
+		button.SetText("登录中...")
 
 		go func() {
 
 			err := handleLogin(usernameInput.Text, passwordInput.Text)
 			if err != nil {
 				dialog.ShowError(err, Window)
-				button.SetText("Login!")
+				button.SetText("登录!")
 				return
 			}
 
-			if currentUser.IsLoginIn {
+			if login.MyCurrentUser.IsLoginIn {
+				go localserver.BeginListen()
 				CheckWPFAndInitPanels()
 				Init()
 			}
-			if currentUser.init && currentUser.user.Mark {
-				fmt.Println(currentUser.user.RetData[0])
+			if login.MyCurrentUser.Init && login.MyCurrentUser.User.Mark {
+				mylogger.Log("已经登录 用户名:", login.MyCurrentUser.User.RetData[0])
 			}
-			button.SetText("Login!")
+			button.SetText("登录!")
 		}()
 
 	})

@@ -2,7 +2,6 @@ package main
 
 import (
 	"ScrambledEggwithTomato/data"
-	"ScrambledEggwithTomato/localserver"
 	"ScrambledEggwithTomato/mylogger"
 	"ScrambledEggwithTomato/panels"
 	"ScrambledEggwithTomato/resources"
@@ -38,11 +37,12 @@ func main() {
 	panels.Init()
 	tm.IsDark = true
 
+	//fmt.Println(utils.GetHWID())
+
 	panels.MyApp.Settings().SetTheme(&tm.MyTheme{})
 	panels.Window.SetIcon(resources.IconResource)
 
 	mylogger.Log("工具箱启动...")
-	go localserver.BeginListen()
 	defer mylogger.Log("工具箱关闭...")
 
 	panels.Window.ShowAndRun()

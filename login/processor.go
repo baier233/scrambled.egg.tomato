@@ -2,107 +2,40 @@ package login
 
 import (
 	"ScrambledEggwithTomato/VMProtect"
+	"ScrambledEggwithTomato/global"
+	"ScrambledEggwithTomato/mylogger"
 	"ScrambledEggwithTomato/utils"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"net"
 	"strconv"
 	"strings"
 	"time"
 )
 
-var (
-	ErrorInternalImpossibleInputData = errors.New("Impossible input data internally")
-	ErrorIllegalInputData            = errors.New("Illegal input data")
-	ErrorNonexistUser                = errors.New("User does not exist")
-	ErrorIllegalReturnData           = errors.New("Illegle return data")
-	ErrorIncorrectActivationCode     = errors.New("Incorrect & Expired Activation Code")
-	ErrorInvalidTime                 = errors.New("Invalid Time")
-	ErrorUserRegitered               = errors.New("This username is registered")
-)
-
-type UserInfo struct {
-	USERNAME string `json:"Username"`
-	PASSWORD string `json:"Password"`
-	HWID     string `json:"HWID"`
-	TIME     string `json:"Time"`
-	RANK     int    `json:"Rank"`
-}
-
-type User struct {
-	Data    []string
-	RetData []string
-	Mark    bool
-}
-
-const (
-	VerifyType     = "Verify"
-	VerifyLength   = len(VerifyType)
-	RegisterType   = "Register"
-	RegisterLength = len(RegisterType)
-)
-const (
-	MsgHeader = "Baier#1337"
-
-	HeaderLength = len(MsgHeader)
-)
-const (
-	TypeRegister = iota
-	TypeLogin
-)
-
-// NewUser creates a User.
-func NewUser(data []string, _type int) (*User, error) {
-
-	if _type == TypeLogin {
-		if len(data) != 3 {
-			return nil, ErrorInternalImpossibleInputData
-		}
-		user := &User{Data: data}
-		user.RetData = make([]string, 3)
-
-		return user, nil
-	}
-
-	if _type == TypeRegister {
-		if len(data) != 4 {
-			return nil, ErrorInternalImpossibleInputData
-		}
-		user := &User{Data: data}
-		user.RetData = make([]string, 3)
-
-		return user, nil
-	}
-
-	return nil, ErrorInternalImpossibleInputData
-}
 func packLogin(username, password, hwid string) []byte {
-	VMProtect.BeginUltra("packLogin\x00")
+	VMProtect.BeginUltra("PackLoginMark\x00")
 	timestr := strconv.FormatInt(time.Now().Unix(), 10)
 
 	preData := username + "|" + password + "|" + hwid
 	preDataHex := base64.StdEncoding.EncodeToString([]byte(preData))
-	fmt.Println(preDataHex)
 	data2send := MsgHeader + VerifyType + preDataHex + "|" + timestr
 	VMProtect.End()
 	return []byte(data2send)
 }
 func packRegister(username, password, hwid, activationCode string) []byte {
-	VMProtect.BeginUltra("packRegister\x00")
+	VMProtect.BeginUltra("PackRegisterMark\x00")
 	timestr := strconv.FormatInt(time.Now().Unix(), 10)
 
 	preData := username + "|" + password + "|" + hwid + "|" + activationCode
 	preDataHex := base64.StdEncoding.EncodeToString([]byte(preData))
-	fmt.Println(preDataHex)
 	data2send := MsgHeader + RegisterType + preDataHex + "|" + timestr
 
 	VMProtect.End()
 	return []byte(data2send)
 }
 func (user *User) _processLogin() error {
-	conn, err := net.Dial("tcp", "localhost:9999")
+	conn, err := net.Dial("tcp", "111.180.205.168:9999")
 	if err != nil {
 		return err
 	}
@@ -117,23 +50,28 @@ func (user *User) _processLogin() error {
 
 		return err
 	}
+	mylogger.Log("Stage 0")
 	bytesRead, err := utils.ReadN(conn, utils.PacketHerderLen_32)
 	if err != nil {
 		return err
 	}
-
-	if string(bytesRead) == "VerifyCode:-1" {
+	mylogger.Log("Stage 1")
+	if string(bytesRead) == VMProtect.GoString(VMProtect.DecryptStringA("VerifyCode:-2\x00")) {
 		return ErrorNonexistUser
 	}
 
-	var userinfo UserInfo
+	if string(bytesRead) == VMProtect.GoString(VMProtect.DecryptStringA("VerifyCode:-3\x00")) {
+		return ErrorIncorrectHWID
+	}
+
+	var userinfo global.UserInfo
 
 	err = json.Unmarshal(bytesRead, &userinfo)
 
 	if err != nil {
 		return ErrorIllegalReturnData
 	}
-
+	global.CurrentUserInfo = &userinfo
 	user.Mark = true
 	user.RetData[0] = userinfo.USERNAME
 
@@ -153,7 +91,7 @@ func (user *User) ProcessLogin() error {
 }
 
 func (user *User) _processRegister() error {
-	conn, err := net.Dial("tcp", "localhost:9999")
+	conn, err := net.Dial("tcp", "111.180.205.168:9999")
 	if err != nil {
 		return err
 	}
@@ -173,8 +111,7 @@ func (user *User) _processRegister() error {
 	}
 	if strings.Contains(string(bytesRead), "VerifyCode") {
 		if string(bytesRead) == VMProtect.GoString(VMProtect.DecryptStringA("VerifyCode:-1\x00")) {
-			fmt.Println("1")
-			return ErrorUserRegitered
+			return ErrorUserRegistered
 		}
 
 		if string(bytesRead) == "VerifyCode:-3" {
@@ -183,7 +120,7 @@ func (user *User) _processRegister() error {
 		}
 		return ErrorInternalImpossibleInputData
 	}
-	var userinfo UserInfo
+	var userinfo global.UserInfo
 
 	err = json.Unmarshal(bytesRead, &userinfo)
 

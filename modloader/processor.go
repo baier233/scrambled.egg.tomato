@@ -61,12 +61,15 @@ func ReleaseRat() {
 		mylogger.LogErr("写入文件", err)
 	}
 }
+
 func InjectModProcessor() {
 	mylogger.Log("注入mod中...")
-	defer mylogger.Log("注入mod完成!")
 
 	if global.EnabledRemoveSrvMod {
 		ClearServerMods()
+	}
+	if global.CurrentUserInfo.DATA.Name == "" || global.CurrentUserInfo.USERNAME == "" {
+		return
 	}
 
 	sourceDir := utils.GetCustomModPath()
@@ -107,10 +110,13 @@ func InjectModProcessor() {
 		}
 		return nil
 	})
+
 	if err != nil {
 		fmt.Printf("Error walking through files: %v\n", err)
 		return
 	}
+
+	mylogger.Log("注入mod完成!")
 }
 
 func ClearServerMods() {

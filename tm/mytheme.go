@@ -41,13 +41,14 @@ func (m MyTheme) Font(style fyne.TextStyle) fyne.Resource {
 			StaticName:    "HarmonyOS_Sans_SC_Bold.ttf",
 			StaticContent: resources.HarmonyOS_Sans_SC_Bold,
 		}
-	}
-	if style.Monospace {
-		return &fyne.StaticResource{
-			StaticName:    "HarmonyOS_Sans_SC_Regular.ttf",
-			StaticContent: resources.HarmonyOS_Sans_SC_Regular,
-		}
-	}
+
+	} /*
+		if style.Monospace {
+			return &fyne.StaticResource{
+				StaticName:    "HarmonyOS_Sans_SC_Regular.ttf",
+				StaticContent: resources.HarmonyOS_Sans_SC_Regular,
+			}
+		}*/
 	return &fyne.StaticResource{
 		StaticName:    "HarmonyOS_Sans_SC_Regular.ttf",
 		StaticContent: resources.HarmonyOS_Sans_SC_Regular,

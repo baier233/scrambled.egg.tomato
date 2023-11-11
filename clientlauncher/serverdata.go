@@ -13,3 +13,5 @@ func NewServerData() *ServerData {
 		Username:   "",
 	}
 }
+
+var ServerDataChan = make(chan *ServerData)

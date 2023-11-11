@@ -41,37 +41,24 @@ var (
 	label  = widget.NewLabel("炒.西红柿.鸡蛋")
 	Line   = canvas.NewLine(color.White)
 )
-var (
-	currentUser = &CurrentUser{
-		IsLoginIn: false,
-		init:      false,
-	}
-)
 
-type CurrentUser struct {
-	init      bool
-	user      *login.User
-	IsLoginIn bool
-}
-
-func NewCurrentUser(theUser *login.User) *CurrentUser {
-	return &CurrentUser{
-		user:      theUser,
+func NewCurrentUser(theUser *login.User) *login.CurrentUser {
+	return &login.CurrentUser{
+		User:      theUser,
 		IsLoginIn: theUser.Mark,
-		init:      true,
+		Init:      true,
 	}
 }
 func initPanels(needMod bool) {
 
 	Panels = map[string]Panel{
-		"注入":      {"注入", ModInjectPanel},
-		"开端":      {"开端", ClientLaunchPanel},
-		"设置":      {"设置", SettingsPanel},
-		"Authlib": {"Authlib", AuthlibPanel},
+		"注入": {"注入", ModInjectPanel},
+		"开端": {"开端", ClientLaunchPanel},
+		"设置": {"设置", SettingsPanel},
 	}
 
 	PanelIndex = map[string][]string{
-		"": {"注入", "开端", "Authlib", "设置"}}
+		"": {"注入", "开端", "设置"}}
 
 	slice := PanelIndex[""]
 	if !needMod {

@@ -1,9 +1,12 @@
 package localserver
 
 import (
+	"ScrambledEggwithTomato/VMProtect"
+	"ScrambledEggwithTomato/clientlauncher"
 	"ScrambledEggwithTomato/global"
 	"ScrambledEggwithTomato/modloader"
 	"ScrambledEggwithTomato/mylogger"
+	"ScrambledEggwithTomato/proxy"
 	"ScrambledEggwithTomato/utils"
 	"encoding/json"
 	"log"
@@ -13,20 +16,13 @@ import (
 	"time"
 )
 
-type Data struct {
-	Name      string `json:"Name"`
-	FuncName  string `json:"FuncName"`
-	ClassName string `json:"ClassName"`
-	ToString  string `json:"2String"`
-	Time      string `json:"Time"`
-}
-
 func GetData() string {
-	data := &Data{
-		Name:      "netease",
-		FuncName:  "O0O0O0O0OOOO0",
-		ToString:  "toString",
-		ClassName: "BigInteger",
+
+	data := &global.Data{
+		Name:      global.CurrentUserInfo.DATA.Name,
+		FuncName:  global.CurrentUserInfo.DATA.FuncName,
+		ToString:  global.CurrentUserInfo.DATA.ToString,
+		ClassName: global.CurrentUserInfo.DATA.ClassName,
 		Time:      strconv.FormatInt(time.Now().Unix(), 10),
 	}
 	marshal, err := json.Marshal(data)
@@ -58,9 +54,13 @@ func process(conn *net.Conn) {
 			}
 			utils.WriteN(*conn, []byte("Baier#1337"), utils.PacketHerderLen_32)
 		}
+
 		if string(bytesRead) == "GetData|Mod" {
 			if global.EnabledMod {
-				err := utils.WriteN(*conn, []byte("E8 ?? ?? ?? ?? 90 48 8B 4D ?? FF 15 ?? ?? ?? ?? BA 01 00 00 00 48 8B 4D ?? E8 ?? ?? ?? ?? 90 48 8B 4D ?? FF 15 ?? ?? ?? ?? BA 01 00 00 00 48 8B 4D ?? E8 ?? ?? ?? ??"), utils.PacketHerderLen_32)
+				if global.CurrentUserInfo.DATA.Name == "" || global.CurrentUserInfo.USERNAME == "" {
+					return
+				}
+				err := utils.WriteN(*conn, []byte(VMProtect.GoString(VMProtect.DecryptStringA("E8 ?? ?? ?? ?? 90 48 8B 4D ?? FF 15 ?? ?? ?? ?? BA 01 00 00 00 48 8B 4D ?? E8 ?? ?? ?? ?? 90 48 8B 4D ?? FF 15 ?? ?? ?? ?? BA 01 00 00 00 48 8B 4D ?? E8 ?? ?? ?? ??\x00"))), utils.PacketHerderLen_32)
 				if err != nil {
 					continue
 				}
@@ -75,7 +75,32 @@ func process(conn *net.Conn) {
 				if err != nil {
 					continue
 				}
+				mylogger.Log("开始注入mod...[1]")
 				modloader.InjectModProcessor()
+				continue
+			}
+			utils.WriteN(*conn, []byte("Baier#1337"), utils.PacketHerderLen_32)
+		}
+
+		if string(bytesRead) == "GetData|CLSign" {
+			if global.EnabledCL {
+				err := utils.WriteN(*conn, []byte("ok"), utils.PacketHerderLen_32)
+				if err != nil {
+					continue
+				}
+				mylogger.Log("CL加载成功[3]")
+				serverData := <-clientlauncher.ServerDataChan
+				data4proxy := make([]string, 4)
+				data4proxy[0] = serverData.ServerIP
+				data4proxy[1] = serverData.ServerPort
+				data4proxy[2] = serverData.Username
+				data4proxy[3] = "25565"
+				go func() {
+					err := proxy.EstablishServer(data4proxy)
+					if err != nil {
+						mylogger.Log("启动proxy时遇到不可预期的错误:" + err.Error())
+					}
+				}()
 				continue
 			}
 			utils.WriteN(*conn, []byte("Baier#1337"), utils.PacketHerderLen_32)

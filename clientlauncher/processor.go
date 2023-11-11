@@ -35,14 +35,10 @@ func OnCloseCL() {
 var lock = false
 
 func ClientLaunchProcessor() {
-	if _, err := os.Stat(utils.GetJreBinPath() + "\\winmnm.dll"); err != nil {
-		if !os.IsNotExist(err) {
-			err := os.Remove(utils.GetJreBinPath() + "\\winmnm.dll")
-			if err != nil {
-				mylogger.LogErr("开端-删除注入文件", err)
-			}
-		} else {
-			mylogger.LogErr("开端-查询注入文件", err)
+	if _, err := os.Stat(utils.GetJreBinPath() + "\\winmm.dll"); err == nil {
+		err := os.Remove(utils.GetJreBinPath() + "\\winmm.dll")
+		if err != nil {
+			mylogger.LogErr("开端-删除注入文件", err)
 		}
 	}
 
@@ -70,19 +66,7 @@ func ClientLaunchProcessor() {
 			}
 
 			if proxy.EnabledProxy {
-
-				data4proxy := make([]string, 4)
-				data4proxy[0] = serverData.ServerIP
-				data4proxy[1] = serverData.ServerPort
-				data4proxy[2] = serverData.Username
-				data4proxy[3] = "25565"
-				go func() {
-					err := proxy.EstablishServer(data4proxy)
-					if err != nil {
-						mylogger.Log("启动proxy时遇到不可预期的错误:" + err.Error())
-					}
-				}()
-
+				ServerDataChan <- serverData
 			}
 
 		} else if !errors.Is(global.ErrorNonExistentMinecraftProcess, err) {

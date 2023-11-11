@@ -32,7 +32,7 @@ func makeMenu(a fyne.App, w fyne.Window) *fyne.MainMenu {
 	})
 	pasteItem.Shortcut = pasteShortcut
 
-	main := fyne.NewMenu("主要的")
+	main := fyne.NewMenu("菜单")
 	mainMenu := fyne.NewMainMenu(
 		main,
 		fyne.NewMenu("编辑", cutItem, copyItem, pasteItem, fyne.NewMenuItemSeparator()),

@@ -20,3 +20,5 @@ const (
 )
 
 var WPFVersion = VersionNULL
+
+var CurrentUserInfo *UserInfo
