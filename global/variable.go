@@ -1,13 +1,12 @@
 package global
 
 import (
-	"unsafe"
-
 	"fyne.io/fyne/v2"
+	"golang.org/x/sys/windows"
 )
 
 var Window fyne.Window
-var CurrentServer unsafe.Pointer
+var CurrentServer *windows.ProcessInformation
 var EnabledMod = false
 var EnabledCL = false
 var EnabledRemoveSrvMod = false

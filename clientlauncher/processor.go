@@ -7,9 +7,13 @@ import (
 	"ScrambledEggwithTomato/utils"
 	"errors"
 	"fyne.io/fyne/v2/dialog"
+	"golang.org/x/net/context"
+	"golang.org/x/sys/windows"
 	"os"
-	"runtime/debug"
+	"time"
 )
+
+var ctx context.Context
 
 func OnEnableCL(group []string) []string {
 	if !global.EnabledCL {
@@ -25,6 +29,7 @@ func OnEnableCL(group []string) []string {
 
 		global.EnabledCL = true
 		mylogger.Log("已开启CL...")
+
 		go ClientLaunchProcessor()
 	}
 	return group
@@ -53,16 +58,20 @@ func ClientLaunchProcessor() {
 	}()
 	mylogger.Log("CL协程守护中...")
 	for global.EnabledCL {
+		time.Sleep(time.Second / 2)
 		var serverData = NewServerData()
 		err := InjectDllIntoMinecraft(serverData)
 		if err == nil {
 			mylogger.Log("Cl加载成功[1]...")
 
 			if global.CurrentServer != nil {
-				server := (*proxy.MinecraftProxyServer)(global.CurrentServer)
-				server.CloseServer()
+				err := windows.TerminateProcess(global.CurrentServer.Process, 1)
+				if err != nil {
+					mylogger.LogErr("结束proxyserver时", err)
+				}
+				windows.CloseHandle(global.CurrentServer.Process)
+				windows.CloseHandle(global.CurrentServer.Thread)
 				global.CurrentServer = nil
-				debug.FreeOSMemory()
 				mylogger.Log("已强制结束proxyserver")
 			}
 

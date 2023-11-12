@@ -3,17 +3,14 @@ package proxy
 import (
 	"ScrambledEggwithTomato/global"
 	"ScrambledEggwithTomato/mylogger"
-	"context"
-	"errors"
 	"fmt"
-	"net"
-	"strings"
-	"time"
+	"github.com/google/uuid"
+	"golang.org/x/sys/windows"
+	"syscall"
 	"unsafe"
-
-	mcnet "github.com/Tnze/go-mc/net"
-	"github.com/Tnze/go-mc/net/packet"
 )
+
+var CurrentUUID uuid.UUID
 
 func EstablishServer(data []string) error {
 	defer func() {
@@ -21,7 +18,6 @@ func EstablishServer(data []string) error {
 			mylogger.Log("Recovered in EstablishServer", r)
 		}
 	}()
-
 	if len(data) != 4 {
 		return global.ErrorInternalIncorrectData
 	}
@@ -29,93 +25,20 @@ func EstablishServer(data []string) error {
 	serverPort := data[1]
 	roleName := data[2]
 	localPort := data[3]
+	appName := syscall.StringToUTF16Ptr("Egg.Proxy.exe")
 
-	if serverIp == "" || serverPort == "" || roleName == "" || localPort == "" {
-		return global.ErrorEmptyInputData
-	}
-	server := MinecraftProxyServer{
-		Listen: "0.0.0.0:" + localPort,
-		Remote: serverIp + ":" + serverPort,
-		MOTD:   "§西红柿炒鸡蛋§w-§6§l代理服务\n§w目标服务器：" + serverIp + "  角色：" + roleName,
-		HandleEncryption: func(serverId string) error {
-			defer func() {
-				if r := recover(); r != nil {
-					mylogger.Log("Recovered in HandleEncryption", r)
-				}
-			}()
+	commandLine := syscall.StringToUTF16Ptr(fmt.Sprintf("serverIp=%s serverPort=%s roleName=%s localPort=%s", serverIp, serverPort, roleName, localPort))
 
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			isTimeout := func() bool {
-				select {
-				default:
-					return false
-				case <-ctx.Done():
-					fmt.Println(ctx.Err())
-					return errors.Is(ctx.Err(), context.DeadlineExceeded)
-				}
-			}
+	var startupInfo windows.StartupInfo
+	startupInfo.Cb = uint32(unsafe.Sizeof(startupInfo))
 
-			defer cancel()
-
-			conn, err := (&net.Dialer{}).DialContext(ctx, "tcp", "127.0.0.1:55996")
-
-			if err != nil {
-				if isTimeout() {
-					mylogger.Log("timeout")
-				}
-				mylogger.Log("无法连接到CL服务器 预期之外的错误　: " + err.Error())
-				return err
-			} else {
-				conn.SetWriteDeadline(time.Now().Add(time.Second * 3))
-				_, err := conn.Write([]byte(serverId + "\u0000"))
-				if err != nil {
-					mylogger.Log("CL服务器疑似已断开链接 预期之外的错误 :" + err.Error())
-					return err
-				}
-				defer conn.Close()
-
-				bytes := make([]byte, 1024)
-
-				_, err = conn.Read(bytes)
-				if err != nil {
-					mylogger.Log("CL服务器疑似已断开链接 预期之外的错误:" + err.Error())
-					return err
-				}
-			}
-			return nil
-
-		},
-		HandleLogin: func(packet *PacketLoginStart) {
-			packet.Name = roleName
-		},
-		Middleware: []func(packet *packet.Packet, clientConn *mcnet.Conn, serverConn *mcnet.Conn) bool{},
-	}
-	go handleLocalPing(server.MOTD, localPort)
-	defer mylogger.Log("代理服务已结束")
-	mylogger.Log("代理服务器已启动")
-	global.CurrentServer = unsafe.Pointer(&server)
-	err := server.StartServer()
+	var procInfo windows.ProcessInformation
+	err := windows.CreateProcess(appName, commandLine, nil, nil, false, 0, nil, nil, &startupInfo, &procInfo)
 	if err != nil {
-		return err
+		mylogger.LogErr("创建Proxy时", err)
 	}
-	return nil
+	global.CurrentServer = &procInfo
 
-}
-func handleLocalPing(description string, port string) {
-	defer func() {
-		if r := recover(); r != nil {
-			mylogger.Log("Recovered in handleLocalPing", r)
-		}
-	}()
-	for EnabledProxy {
-		time.Sleep(1000)
-		connudp, err := net.Dial("udp", "224.0.2.60:4445")
-		if err != nil {
-			time.Sleep(1)
-		} else {
-			connudp.Write([]byte("[MOTD]" + strings.Replace(strings.Replace(description, "\n", " ", -1), "目标", "", -1) + "[/MOTD][AD]" + port + "[/AD]"))
-			connudp.Close()
-		}
-	}
+	return nil
 
 }

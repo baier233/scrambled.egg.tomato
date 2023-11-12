@@ -7,9 +7,8 @@ import (
 	"ScrambledEggwithTomato/panels"
 	"ScrambledEggwithTomato/resources"
 	"ScrambledEggwithTomato/tm"
-	"log"
-
 	"github.com/fatih/color"
+	"log"
 )
 
 func initLoginPanel() {
@@ -37,7 +36,6 @@ func main() {
 	initLoginPanel()
 	panels.Init()
 	tm.IsDark = true
-
 	//fmt.Println(utils.GetHWID())
 
 	panels.MyApp.Settings().SetTheme(&tm.MyTheme{})

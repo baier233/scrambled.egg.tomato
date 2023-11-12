@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-func GetData() string {
+func GetData() []byte {
 
 	data := &global.Data{
 		Name:      global.CurrentUserInfo.DATA.Name,
@@ -27,9 +27,9 @@ func GetData() string {
 	}
 	marshal, err := json.Marshal(data)
 	if err != nil {
-		return ""
+		return []byte("")
 	}
-	return string(marshal)
+	return marshal
 }
 func process(conn *net.Conn) {
 	defer (*conn).Close()
@@ -45,7 +45,7 @@ func process(conn *net.Conn) {
 
 		if string(bytesRead) == "GetData|CL" {
 			if global.EnabledCL {
-				err := utils.WriteN(*conn, []byte(GetData()), utils.PacketHerderLen_32)
+				err := utils.WriteN(*conn, GetData(), utils.PacketHerderLen_32)
 				if err != nil {
 					continue
 				}
