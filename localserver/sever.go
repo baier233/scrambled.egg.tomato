@@ -32,11 +32,14 @@ func GetData() []byte {
 	return marshal
 }
 func process(conn *net.Conn) {
+
 	defer (*conn).Close()
+	readTimeout := 5 * time.Second
+	(*conn).SetReadDeadline(time.Now().Add(readTimeout))
 	for {
 		bytesRead, err := utils.ReadN(*conn, utils.PacketHerderLen_32)
 		if err != nil {
-			continue
+			return
 		}
 		if strings.Compare(string(bytesRead), "exit") == 0 {
 			log.Println("Connection sent exit")
@@ -47,10 +50,10 @@ func process(conn *net.Conn) {
 			if global.EnabledCL {
 				err := utils.WriteN(*conn, GetData(), utils.PacketHerderLen_32)
 				if err != nil {
-					continue
+					return
 				}
 				mylogger.Log("CL加载成功[2]...")
-				continue
+				return
 			}
 			utils.WriteN(*conn, []byte("Baier#1337"), utils.PacketHerderLen_32)
 		}
@@ -62,9 +65,9 @@ func process(conn *net.Conn) {
 				}
 				err := utils.WriteN(*conn, []byte(VMProtect.GoString(VMProtect.DecryptStringA("E8 ?? ?? ?? ?? 90 48 8B 4D ?? FF 15 ?? ?? ?? ?? BA 01 00 00 00 48 8B 4D ?? E8 ?? ?? ?? ?? 90 48 8B 4D ?? FF 15 ?? ?? ?? ?? BA 01 00 00 00 48 8B 4D ?? E8 ?? ?? ?? ??\x00"))), utils.PacketHerderLen_32)
 				if err != nil {
-					continue
+					return
 				}
-				continue
+				return
 			}
 			utils.WriteN(*conn, []byte("Baier#1337"), utils.PacketHerderLen_32)
 		}
@@ -73,11 +76,11 @@ func process(conn *net.Conn) {
 			if global.EnabledMod {
 				err := utils.WriteN(*conn, []byte("ok"), utils.PacketHerderLen_32)
 				if err != nil {
-					continue
+					return
 				}
 				mylogger.Log("开始注入mod...[1]")
 				modloader.InjectModProcessor()
-				continue
+				return
 			}
 			utils.WriteN(*conn, []byte("Baier#1337"), utils.PacketHerderLen_32)
 		}
@@ -86,7 +89,7 @@ func process(conn *net.Conn) {
 			if global.EnabledCL {
 				err := utils.WriteN(*conn, []byte("ok"), utils.PacketHerderLen_32)
 				if err != nil {
-					continue
+					return
 				}
 				mylogger.Log("CL加载成功[3]")
 				serverData := <-clientlauncher.ServerDataChan
@@ -101,7 +104,7 @@ func process(conn *net.Conn) {
 						mylogger.Log("启动proxy时遇到不可预期的错误:" + err.Error())
 					}
 				}()
-				continue
+				return
 			}
 			utils.WriteN(*conn, []byte("Baier#1337"), utils.PacketHerderLen_32)
 		}

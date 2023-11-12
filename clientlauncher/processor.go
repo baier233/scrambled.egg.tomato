@@ -56,6 +56,7 @@ func ClientLaunchProcessor() {
 	defer func() {
 		lock = false
 	}()
+
 	mylogger.Log("CL协程守护中...")
 	for global.EnabledCL {
 		time.Sleep(time.Second / 2)

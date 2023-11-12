@@ -29,6 +29,10 @@ func main() {
 	// 	fmt.Println(err.Error())
 	// }
 
+	/*f, _ := os.OpenFile("cpu.pprof", os.O_CREATE|os.O_RDWR, 0644)
+	defer f.Close()
+	pprof.StartCPUProfile(f)
+	defer pprof.StopCPUProfile()*/
 	red := color.New(color.FgHiRed, color.Bold).SprintFunc()
 	log.SetPrefix("[" + red(" 炒.西红柿.鸡蛋 ") + "] ")
 
