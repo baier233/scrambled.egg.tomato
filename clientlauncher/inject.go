@@ -82,11 +82,11 @@ func InjectDllIntoMinecraft(serverData *ServerData) error {
 			if err == nil {
 
 				if strings.Contains(strings.ToUpper(cmdline), strings.ToUpper("-DlauncherControlPort")) {
-
 					str := fmt.Sprintf("Process Name: %s, PID: %d ", exeName, processEntry.ProcessID)
 					mylogger.Log("已找到Minecraft，" + str + " 准备执行注入操作...")
 					pushData(cmdline, serverData)
 					targetPid = processEntry.ProcessID
+					pidContainer.Add(strconv.Itoa(int(targetPid)))
 					break
 				}
 			}

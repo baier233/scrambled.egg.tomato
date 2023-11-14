@@ -22,4 +22,4 @@ var WPFVersion = VersionNULL
 
 var CurrentUserInfo *UserInfo
 
-const ScrambledEggTomatoVersion = "1.0.2"
+const ScrambledEggTomatoVersion = "1.0.3"

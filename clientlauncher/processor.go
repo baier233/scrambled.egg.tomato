@@ -7,13 +7,10 @@ import (
 	"ScrambledEggwithTomato/utils"
 	"errors"
 	"fyne.io/fyne/v2/dialog"
-	"golang.org/x/net/context"
 	"golang.org/x/sys/windows"
 	"os"
 	"time"
 )
-
-var ctx context.Context
 
 func OnEnableCL(group []string) []string {
 	if !global.EnabledCL {
@@ -77,7 +74,11 @@ func ClientLaunchProcessor() {
 			}
 
 			if proxy.EnabledProxy {
-				ServerDataChan <- serverData
+				select {
+				case ServerDataChan <- serverData:
+				case <-time.After(time.Minute * 2):
+					mylogger.LogErr("发送服务器数据时", errors.New("超时"))
+				}
 			}
 
 		} else if !errors.Is(global.ErrorNonExistentMinecraftProcess, err) {

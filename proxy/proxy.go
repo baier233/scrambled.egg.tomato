@@ -26,7 +26,7 @@ func EstablishServer(data []string) error {
 	roleName := data[2]
 	localPort := data[3]
 	appName := syscall.StringToUTF16Ptr("Egg.Proxy.exe")
-
+	mylogger.Log(fmt.Sprintf("serverIp=%s serverPort=%s roleName=%s localPort=%s", serverIp, serverPort, roleName, localPort))
 	commandLine := syscall.StringToUTF16Ptr(fmt.Sprintf("serverIp=%s serverPort=%s roleName=%s localPort=%s", serverIp, serverPort, roleName, localPort))
 
 	var startupInfo windows.StartupInfo

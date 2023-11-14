@@ -6,13 +6,29 @@ import (
 	"ScrambledEggwithTomato/login"
 	"ScrambledEggwithTomato/mylogger"
 	"ScrambledEggwithTomato/utils"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/json"
+	"errors"
 	"fyne.io/fyne/v2/dialog"
+	"io"
+	"io/ioutil"
 	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 )
+
+const credentialsFile = "credentials.json"
+const key = "BaierOops#133777" // Change this to a secure key in a real application
+
+// Credentials struct to store username and password
+type Credentials struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
 
 var button *widget.Button
 
@@ -38,6 +54,10 @@ func handleLogin(username, password string) error {
 
 	if user.Mark {
 		login.MyCurrentUser = NewCurrentUser(user)
+		err := saveCredentials(username, password)
+		if err != nil {
+			return err
+		}
 		return nil
 	}
 
@@ -49,7 +69,11 @@ func LoginScreen(_ fyne.Window) fyne.CanvasObject {
 	usernameInput := widget.NewEntry()
 	passwordInput := widget.NewPasswordEntry()
 	form := widget.NewForm(widget.NewFormItem("用户名", usernameInput), widget.NewFormItem("密码", passwordInput))
-
+	savedUsername, savedPassword, err := loadCredentials()
+	if err == nil {
+		usernameInput.SetText(savedUsername)
+		passwordInput.SetText(savedPassword)
+	}
 	Line.StrokeWidth = 5
 
 	button = widget.NewButton("登录!", func() {
@@ -95,4 +119,82 @@ func LoginScreen(_ fyne.Window) fyne.CanvasObject {
 		Line,
 	)
 	return mainPanel
+}
+
+func saveCredentials(username, password string) error {
+	creds := Credentials{
+		Username: username,
+		Password: password,
+	}
+
+	data, err := json.MarshalIndent(creds, "", "    ")
+	if err != nil {
+		return err
+	}
+
+	// Encrypt the data before saving
+	encryptedData, err := encrypt(data, []byte(key))
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(credentialsFile, encryptedData, 0600)
+}
+
+func loadCredentials() (string, string, error) {
+	data, err := ioutil.ReadFile(credentialsFile)
+	if err != nil {
+		return "", "", err
+	}
+
+	// Decrypt the data before loading
+	decryptedData, err := decrypt(data, []byte(key))
+	if err != nil {
+		return "", "", err
+	}
+
+	var creds Credentials
+	err = json.Unmarshal(decryptedData, &creds)
+	if err != nil {
+		return "", "", err
+	}
+
+	return creds.Username, creds.Password, nil
+}
+
+func encrypt(data, key []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	ciphertext := make([]byte, aes.BlockSize+len(data))
+	iv := ciphertext[:aes.BlockSize]
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		return nil, err
+	}
+
+	stream := cipher.NewCFBEncrypter(block, iv)
+	stream.XORKeyStream(ciphertext[aes.BlockSize:], data)
+
+	return ciphertext, nil
+}
+
+func decrypt(data, key []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(data) < aes.BlockSize {
+		return nil, errors.New("ciphertext too short")
+	}
+
+	iv := data[:aes.BlockSize]
+	data = data[aes.BlockSize:]
+
+	stream := cipher.NewCFBDecrypter(block, iv)
+	stream.XORKeyStream(data, data)
+
+	return data, nil
 }
